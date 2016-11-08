@@ -23,6 +23,7 @@ func getMesosURL(host string) string {
 
 func main() {
 	// Read the MESOS_HOST environment variable and then build the corect URL
+	// probably this should default to the Consul address by default
 	host := os.Getenv("MESOS_HOST")
 	// Get the Mesos API URL
 	mesosURL := getMesosURL(host)
@@ -32,8 +33,19 @@ func main() {
 	mesos.DetermineLeader()
 	state, _ := mesos.GetStateFromLeader()
 
+	var totalCPUAvailable, totalMemAvailable, totalCPUUsed, totalMemUsed float64
+
 	for _, slave := range state.Slaves {
-		fmt.Println(slave.UnreservedResources.CPUs, "CPUs and", slave.UnreservedResources.Mem, "MBs are available on", slave.ID)
+		cpuAvailable := slave.UnreservedResources.CPUs - slave.UsedResources.CPUs
+		memAvailable := slave.UnreservedResources.Mem - slave.UsedResources.Mem
+		totalCPUAvailable += slave.UnreservedResources.CPUs
+		totalMemAvailable += slave.UnreservedResources.Mem
+		totalCPUUsed += slave.UsedResources.CPUs
+		totalMemUsed += slave.UsedResources.Mem
+
+		fmt.Println(cpuAvailable, "CPUs and", memAvailable, "MBs are available on", slave.ID, "(", slave.Hostname, ")")
 	}
+	fmt.Println("CPUs used:", totalCPUUsed, "of", totalCPUAvailable)
+	fmt.Println("Memory used:", totalMemUsed, "of", totalMemAvailable)
 
 }
