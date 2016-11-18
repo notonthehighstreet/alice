@@ -11,6 +11,9 @@ import (
 	"time"
 
 	"github.com/andygrunwald/megos"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/autoscaling"
 )
 
 var (
@@ -20,10 +23,9 @@ var (
 	Error *log.Logger
 )
 
-// MesosClusterStats for storing cluster info
-type MesosClusterStats struct {
-	clusterCPUAvailable, clusterCPUUsed float64
-	clusterMemAvailable, clusterMemUsed float64
+// MesosSlaveStats stores the individual slave stats
+type MesosSlaveStats struct {
+	// Figure out how exactly to have an array of slave data in here
 }
 
 // Init sets logging settings when the app starts
@@ -64,7 +66,7 @@ func getMesosURL() string {
 	return url
 }
 
-func mesosStats(mesosURL string, clusterStats MesosClusterStats) {
+func mesosStats(mesosURL string) {
 	mesosNode, _ := url.Parse(mesosURL)
 	mesos := megos.NewClient([]*url.URL{mesosNode}, nil)
 	mesos.DetermineLeader()
@@ -84,53 +86,66 @@ func mesosStats(mesosURL string, clusterStats MesosClusterStats) {
 		totalMemUsed += slave.UsedResources.Mem
 		//fmt.Println(cpuAvailable, "CPUs and", memAvailable, "MBs are available on", slave.ID, "(", slave.Hostname, ")")
 	}
-	clusterStats.clusterCPUAvailable = totalCPUAvailable
-	clusterStats.clusterCPUUsed = totalCPUUsed
-	clusterStats.clusterMemAvailable = totalMemAvailable
-	clusterStats.clusterMemUsed = totalMemUsed
+	fmt.Println("")
 	fmt.Println("CPUs used:", totalCPUUsed, "of", totalCPUAvailable)
 	fmt.Println("Memory used:", totalMemUsed, "of", totalMemAvailable)
 }
 
-func autoscaler() {
-	fmt.Println("Pretend I'm an autoscaler running sometimes...")
+func autoscaler(mesosURL string) {
+	for _ = range time.NewTicker(5 * time.Second).C {
+		fmt.Println("\nI'm an autoscaler, and here's some mesos info:")
+		mesos := mesosStats(mesosURL)
+		fmt.Println(mesosURL)
+
+		sess, err := session.NewSession()
+		if err != nil {
+			fmt.Println("failed to create session,", err)
+			return
+		}
+
+		svc := autoscaling.New(sess, &aws.Config{Region: aws.String("eu-west-1")})
+
+		params := &autoscaling.DescribeAutoScalingGroupsInput{
+			AutoScalingGroupNames: []*string{
+				aws.String("ResourceName"), // Required
+				// More values...
+			},
+			MaxRecords: aws.Int64(1),
+			NextToken:  aws.String("XmlString"),
+		}
+		resp, err := svc.DescribeAutoScalingGroups(params)
+
+		if err != nil {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+			return
+		}
+
+		// Pretty-print the response data.
+		fmt.Println(resp)
+	}
 }
 
-func webUI(w http.ResponseWriter, r *http.Request, clusterStats MesosClusterStats) {
-	io.WriteString(w, "Hello world!")
-	fmt.Println(clusterStats)
-}
-
-func webHealth(w http.ResponseWriter, r *http.Request) {
-	// for now, if the process is up, we'll consider it healthy
+func webUI(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, "200 OK")
-	// look into using Runner's task.Running() as a health check.
 }
 
 func main() {
 	// Initialize logging
 	Init(os.Stdout, os.Stderr)
 
-	// Global instance of our MesosClusterStats so multiple functions can access the info
-	var clusterStats MesosClusterStats
-
 	// Get the Mesos URL from an ENV var, or from Consul
 	mesosURL := getMesosURL()
 
 	// Run goroutine to grab stats every 5 seconds
-	for _ = range time.NewTicker(5 * time.Second).C {
-		mesosStats(mesosURL, clusterStats)
-	}
-
-	// run autoscaler function
-	for _ = range time.NewTicker(5 * time.Second).C {
-		autoscaler()
-	}
+	//go mesosStats(mesosURL)
+	go autoscaler(mesosURL)
 
 	// start web server just because
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		webUI(w, r, clusterStats)
-	})
-	http.ListenAndServe(":8000", nil)
+	//http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	//	webUI(w, r)
+	//})
+	//http.ListenAndServe(":8000", nil)
 
 }
