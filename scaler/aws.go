@@ -1,4 +1,4 @@
-package main
+package scaler
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/autoscaling"
 )
 
-func main() {
+func upByOne() {
 
 	// Create aws session
 	sess, err := session.NewSession()
