@@ -30,7 +30,7 @@ func upByOne() {
 	svc := autoscaling.New(sess, aws.NewConfig().WithRegion(region))
 
 	// Grab our Autoscaling Group
-	// does this need to be an array? there will likely only ever be one
+	// does this need to be an array? I *think* there will only ever be one
 	var myGroup []*autoscaling.Group
 	done := false
 	params := &autoscaling.DescribeAutoScalingGroupsInput{
@@ -70,8 +70,7 @@ func upByOne() {
 		DesiredCapacity:      aws.Int64(newCapacity), // Required
 		HonorCooldown:        aws.Bool(true),
 	}
-	//resp, err := svc.SetDesiredCapacity(scalingParams)
-	err := svc.SetDesiredCapacity(scalingParams)
+	resp, err := svc.SetDesiredCapacity(scalingParams)
 	if err != nil {
 		fmt.Println("Failed:", err)
 		return
