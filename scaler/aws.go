@@ -9,7 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/autoscaling"
 )
 
-func upByOne() {
+func UpByOne() {
 
 	// Create aws session
 	sess, err := session.NewSession()
