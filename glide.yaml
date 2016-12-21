@@ -1,0 +1,12 @@
+package: github.com/notonthehighstreet/autoscaler
+import:
+- package: github.com/andygrunwald/megos
+- package: github.com/aws/aws-sdk-go
+  version: ^1.6.6
+  subpackages:
+  - aws
+  - aws/ec2metadata
+  - aws/session
+  - service/autoscaling
+- package: github.com/op/go-logging
+  version: ^1.0.0
