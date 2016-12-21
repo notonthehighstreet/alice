@@ -1,15 +1,12 @@
 package mesos
 
 import (
-	"net/url"
-
-	"github.com/andygrunwald/megos"
 	"github.com/op/go-logging"
 )
 
 type MesosMaster struct {
-	URL    string
 	logger *logging.Logger
+	client MesosClient
 }
 
 type MesosStats struct {
@@ -22,24 +19,15 @@ type MesosStats struct {
 	MemPercent   float64
 }
 
-// MesosURL refers to the internal path to the Mesos master on this instance.
-const MesosURL = "http://mesos.service.consul:5050/state"
-
 // NewMesosMaster initialises any new Mesos master. We will use this master to determine the leader of the cluster.
-func NewMesosMaster(logger *logging.Logger) *MesosMaster {
-	return &MesosMaster{URL: MesosURL, logger: logger}
+func NewMesosMaster(logger *logging.Logger, mesos MesosClient) *MesosMaster {
+	return &MesosMaster{logger: logger, client: mesos}
 }
 
 func (m *MesosMaster) Stats() (*MesosStats, error) {
-	mesosNode, err := url.Parse(m.URL)
-	if err != nil {
-		return nil, err
-	}
 
-	mesos := megos.NewClient([]*url.URL{mesosNode}, nil)
-	mesos.DetermineLeader()
 
-	state, err := mesos.GetStateFromLeader()
+	state, err := m.client.GetStateFromLeader()
 	if err != nil {
 		return nil, err
 	}

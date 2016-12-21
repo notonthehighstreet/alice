@@ -13,7 +13,7 @@ func main() {
 	var log = logging.MustGetLogger("autoscaler")
 
 	// Get the Mesos URL from Consul
-	mesosMaster := mesos.NewMesosMaster(log)
+	mesosMaster := mesos.NewMesosMaster(log, mesos.NewMesosClient("http://mesos.service.consul:5050/state"))
 
 	log.Info("Running autoscaler")
 	scaler, err := scaler.NewScaler(log)
