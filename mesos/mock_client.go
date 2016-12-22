@@ -1,8 +1,8 @@
 package mesos
 
 import (
-	"github.com/stretchr/testify/mock"
 	"github.com/andygrunwald/megos"
+	"github.com/stretchr/testify/mock"
 )
 
 type MockMesosClient struct {

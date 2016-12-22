@@ -25,8 +25,6 @@ func NewMesosMaster(logger *logging.Logger, mesos MesosClient) *MesosMaster {
 }
 
 func (m *MesosMaster) Stats() (*MesosStats, error) {
-
-
 	state, err := m.client.GetStateFromLeader()
 	if err != nil {
 		return nil, err

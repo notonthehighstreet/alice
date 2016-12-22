@@ -9,11 +9,17 @@ import (
 	"github.com/op/go-logging"
 )
 
+var MesosURL = "http://mesos.service.consul:5050/state"
+
 func main() {
 	var log = logging.MustGetLogger("autoscaler")
 
 	// Get the Mesos URL from Consul
-	mesosMaster := mesos.NewMesosMaster(log, mesos.NewMesosClient("http://mesos.service.consul:5050/state"))
+	client, err := mesos.NewMesosClient(MesosURL)
+	if err != nil {
+		log.Errorf("mesos: %s", err)
+	}
+	mesosMaster := mesos.NewMesosMaster(log, client)
 
 	log.Info("Running autoscaler")
 	scaler, err := scaler.NewScaler(log)
