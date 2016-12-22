@@ -7,6 +7,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/autoscaling"
 
 	"github.com/op/go-logging"
+
+	"errors"
 )
 
 type Scaler struct {
@@ -30,7 +32,7 @@ func NewScaler(logger *logging.Logger) (*Scaler, error) {
 	return &Scaler{session: session, logger: logger}, nil
 }
 
-func (s *Scaler) ScaleUp() error {
+func (s *Scaler) Scale(amount int64) error {
 	metadata, err := s.metadata()
 	if err != nil {
 		return err
@@ -39,23 +41,20 @@ func (s *Scaler) ScaleUp() error {
 	// create our session to AWS
 	svc := autoscaling.New(s.session, aws.NewConfig().WithRegion(metadata.region))
 
-	// Grab our Autoscaling Group
-	// does this need to be an array? I *think* there will only ever be one
-	var myGroup []*autoscaling.Group
+	var group *autoscaling.Group
 	done := false
-	params := &autoscaling.DescribeAutoScalingGroupsInput{
-		AutoScalingGroupNames: []*string{},
-	}
+
+	params := &autoscaling.DescribeAutoScalingGroupsInput{}
 	for !done {
 		resp, errD := svc.DescribeAutoScalingGroups(params)
 		if errD != nil {
 			return err
 		}
 
-		for _, group := range resp.AutoScalingGroups {
-			for _, server := range group.Instances {
+		for _, scaleGroup := range resp.AutoScalingGroups {
+			for _, server := range scaleGroup.Instances {
 				if *server.InstanceId == metadata.instanceID {
-					myGroup = append(myGroup, group)
+					group = scaleGroup
 				}
 			}
 		}
@@ -65,18 +64,23 @@ func (s *Scaler) ScaleUp() error {
 			params.NextToken = resp.NextToken
 		}
 	}
+
+	if group == nil {
+		return errors.New("scaler: no auto scaling group available")
+	}
+
 	// myGroup contains the autoscaling group we live in.
-	groupName := *myGroup[0].AutoScalingGroupName
-	currentCapacity := *myGroup[0].DesiredCapacity
+	groupName := *group.AutoScalingGroupName
+	currentCapacity := *group.DesiredCapacity
 	s.logger.Infof("scaler: current capacity is: %d", currentCapacity)
-	newCapacity := currentCapacity + 1
+	newCapacity := currentCapacity + amount
 	s.logger.Infof("scaler: new desired capacity will be: %d", newCapacity)
 
-	// TODO: we'll want to check for the status of the autoscaling group. Won't want to
-	//    scale while a scaling operation is already in effect. Probably want to use
-	//    a cooldown timer or something
-	// Actually, the returned error codes might tell us if an operation is already in progress...
+	if newCapacity < *group.MinSize {
+		return errors.New("scaler: attempt to scale below minimum capacity denied")
+	}
 
+	// This will fail if there's an operation already in place.
 	scalingParams := &autoscaling.SetDesiredCapacityInput{
 		AutoScalingGroupName: aws.String(groupName),
 		DesiredCapacity:      aws.Int64(newCapacity),
@@ -88,7 +92,7 @@ func (s *Scaler) ScaleUp() error {
 		return err
 	}
 
-	s.logger.Infof("scaler: scaling %s to %d slaves", groupName, newCapacity)
+	s.logger.Infof("scaler: scaling %s to %f slaves", groupName, newCapacity)
 	return nil
 }
 

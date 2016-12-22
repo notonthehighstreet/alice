@@ -26,21 +26,20 @@ func main() {
 		if err != nil {
 			log.Errorf("mesos: %s", err.Error())
 		}
+		stats.LogUsage(log)
 
-		if stats.CPUPercent >= 0.8 {
-			err := scaler.ScaleUp()
+		if stats.CPUPercent >= 0.8 || stats.MemPercent >= 0.8 {
+			err := scaler.Scale(1)
 			if err != nil {
 				log.Errorf("Error scaling up - %v", err)
 			}
-			log.Info("Scaled up by one due to CPU pressure!")
-
-		} else if stats.MemPercent >= 0.8 {
-			err := scaler.ScaleUp()
+			log.Info("Scaled up by one due to CPU/Mem pressure!")
+		} else if stats.CPUPercent <= 0.2 || stats.MemPercent <= 0.2 {
+			err := scaler.Scale(-1)
 			if err != nil {
-				log.Errorf("Error scaling up - %v", err)
+				log.Errorf("Error scaling down - %v", err)
 			}
-			log.Info("Scaled up by one due to memory pressure!")
+			log.Info("Scaled down by one due to CPU/Mem pressure!")
 		}
-
 	}
 }

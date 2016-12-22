@@ -55,14 +55,13 @@ func (m *MesosMaster) Stats() (*MesosStats, error) {
 	stats.CPUPercent = stats.CPUUsed / stats.CPUAvailable
 	stats.MemPercent = stats.MemUsed / stats.MemAvailable
 
-	stats.LogUsage(m.logger)
-
 	return stats, nil
 }
 
+// LogUsage pipes the current state of the resources available to this Mesos master.
 func (s *MesosStats) LogUsage(log *logging.Logger) {
-	log.Infof("mesos: CPUs used: %d of %d", s.CPUUsed, s.CPUAvailable)
-	log.Infof("mesos: Memory used: %d of %d", s.MemUsed, s.MemAvailable)
-	log.Infof("mesos: CPU usage: %d", s.CPUPercent)
-	log.Infof("mesos: Memory usage: %d", s.MemPercent)
+	log.Infof("mesos: CPUs used: %.2f of %.2f", s.CPUUsed, s.CPUAvailable)
+	log.Infof("mesos: Memory used: %.2f of %.2f", s.MemUsed, s.MemAvailable)
+	log.Infof("mesos: CPU usage: %.2f%%", s.CPUPercent*100)
+	log.Infof("mesos: Memory usage: %.2f%%", s.MemPercent*100)
 }
