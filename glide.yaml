@@ -10,3 +10,5 @@ import:
   - service/autoscaling
 - package: github.com/op/go-logging
   version: ^1.0.0
+- package: github.com/stretchr/testify
+  version: ^1.1.4
