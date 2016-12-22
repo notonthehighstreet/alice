@@ -6,6 +6,9 @@ import (
 	"github.com/notonthehighstreet/autoscaler/mesos"
 	"github.com/notonthehighstreet/autoscaler/scaler"
 
+	"github.com/aws/aws-sdk-go/aws/ec2metadata"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/autoscaling"
 	"github.com/op/go-logging"
 )
 
@@ -22,7 +25,14 @@ func main() {
 	mesosMaster := mesos.NewMesosMaster(log, client)
 
 	log.Info("Running autoscaler")
-	scaler, err := scaler.NewScaler(log)
+
+	// create our session to AWS
+	s, err := session.NewSession()
+	if err != nil {
+		log.Errorf("%s", err.Error())
+	}
+
+	scaler, err := scaler.NewScaler(log, autoscaling.New(s), ec2metadata.New(s))
 	if err != nil {
 		log.Errorf("scaler: %s", err.Error())
 	}

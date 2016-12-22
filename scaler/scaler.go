@@ -2,18 +2,22 @@ package scaler
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/ec2metadata"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/autoscaling"
 
 	"github.com/op/go-logging"
 
 	"errors"
+	"github.com/aws/aws-sdk-go/service/autoscaling/autoscalingiface"
 )
 
+type EC2MetadataAPI interface {
+	GetMetadata(string) (string, error)
+}
+
 type Scaler struct {
-	session *session.Session
-	logger  *logging.Logger
+	logger         *logging.Logger
+	autoscalingSvc autoscalingiface.AutoScalingAPI
+	ec2metadataSvc EC2MetadataAPI
 }
 
 type ScalerMetadata struct {
@@ -23,13 +27,9 @@ type ScalerMetadata struct {
 }
 
 // NewScaler initialises a new Scaler instance with an AWS session.
-func NewScaler(logger *logging.Logger) (*Scaler, error) {
-	session, err := session.NewSession()
-	if err != nil {
-		return nil, err
-	}
+func NewScaler(logger *logging.Logger, autoscalingSvc autoscalingiface.AutoScalingAPI, ec2metadataSvc EC2MetadataAPI) (*Scaler, error) {
 
-	return &Scaler{session: session, logger: logger}, nil
+	return &Scaler{autoscalingSvc: autoscalingSvc, ec2metadataSvc: ec2metadataSvc, logger: logger}, nil
 }
 
 func (s *Scaler) Scale(amount int64) error {
@@ -38,15 +38,12 @@ func (s *Scaler) Scale(amount int64) error {
 		return err
 	}
 
-	// create our session to AWS
-	svc := autoscaling.New(s.session, aws.NewConfig().WithRegion(metadata.region))
-
 	var group *autoscaling.Group
 	done := false
 
 	params := &autoscaling.DescribeAutoScalingGroupsInput{}
 	for !done {
-		resp, errD := svc.DescribeAutoScalingGroups(params)
+		resp, errD := s.autoscalingSvc.DescribeAutoScalingGroups(params)
 		if errD != nil {
 			return err
 		}
@@ -88,7 +85,7 @@ func (s *Scaler) Scale(amount int64) error {
 	}
 
 	// A successful response is one that doesn't return an error.
-	if _, err = svc.SetDesiredCapacity(scalingParams); err != nil {
+	if _, err = s.autoscalingSvc.SetDesiredCapacity(scalingParams); err != nil {
 		return err
 	}
 
@@ -97,13 +94,11 @@ func (s *Scaler) Scale(amount int64) error {
 }
 
 func (s *Scaler) metadata() (*ScalerMetadata, error) {
-	svc := ec2metadata.New(s.session)
-
-	instanceID, err := svc.GetMetadata("instance-id")
+	instanceID, err := s.ec2metadataSvc.GetMetadata("instance-id")
 	if err != nil {
 		return nil, err
 	}
-	regionWithAZ, err := svc.GetMetadata("placement/availability-zone")
+	regionWithAZ, err := s.ec2metadataSvc.GetMetadata("placement/availability-zone")
 	if err != nil {
 		return nil, err
 	}
