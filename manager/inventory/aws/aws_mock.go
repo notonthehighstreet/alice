@@ -1,4 +1,4 @@
-package scaler
+package aws
 
 import (
 	"github.com/aws/aws-sdk-go/service/autoscaling"
@@ -12,7 +12,7 @@ type MockAutoScalingClient struct {
 }
 
 func (m *MockAutoScalingClient) DescribeAutoScalingGroups(p *autoscaling.DescribeAutoScalingGroupsInput) (*autoscaling.DescribeAutoScalingGroupsOutput, error) {
-	args := m.Mock.Called(p)
+	args := m.Mock.Called()
 	output := args.Get(0).(autoscaling.DescribeAutoScalingGroupsOutput)
 	return &output, args.Error(1)
 }
