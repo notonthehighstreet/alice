@@ -4,11 +4,10 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/autoscaling"
 
-	"github.com/op/go-logging"
-
 	"errors"
 	"github.com/aws/aws-sdk-go/service/autoscaling/autoscalingiface"
 	"github.com/notonthehighstreet/autoscaler/manager/inventory"
+	"github.com/sirupsen/logrus"
 )
 
 type EC2MetadataAPI interface {
@@ -16,7 +15,7 @@ type EC2MetadataAPI interface {
 }
 
 type AWSInventory struct {
-	logger         *logging.Logger
+	logger         *logrus.Entry
 	autoscalingSvc autoscalingiface.AutoScalingAPI
 	ec2metadataSvc EC2MetadataAPI
 	groupName      string
@@ -29,7 +28,7 @@ type AWSMetadata struct {
 	instanceID   string
 }
 
-func New(logger *logging.Logger, autoscalingSvc autoscalingiface.AutoScalingAPI, ec2metadataSvc EC2MetadataAPI) *AWSInventory {
+func New(logger *logrus.Entry, autoscalingSvc autoscalingiface.AutoScalingAPI, ec2metadataSvc EC2MetadataAPI) *AWSInventory {
 	a := AWSInventory{autoscalingSvc: autoscalingSvc, ec2metadataSvc: ec2metadataSvc, logger: logger}
 	a.RefreshMetadata()
 	return &a
@@ -124,7 +123,7 @@ func (a *AWSInventory) describeAutoScalingGroups(params *autoscaling.DescribeAut
 	}
 
 	if group == nil {
-		a.logger.Fatal("aws: no auto scaling group available")
+		a.logger.Fatal("No auto scaling group available")
 	}
 	return group
 }
@@ -142,9 +141,9 @@ func (a *AWSInventory) Scale(amount int) error {
 	// myGroup contains the autoscaling group we live in.
 	groupName := *group.AutoScalingGroupName
 	currentCapacity := *group.DesiredCapacity
-	a.logger.Infof("aws: current capacity is: %d", currentCapacity)
+	a.logger.Infof("Current capacity is: %d", currentCapacity)
 	newCapacity := currentCapacity + int64(amount)
-	a.logger.Infof("aws: new desired capacity will be: %d", newCapacity)
+	a.logger.Infof("New desired capacity will be: %d", newCapacity)
 
 	if newCapacity < *group.MinSize {
 		return errors.New("aws: attempt to scale below minimum capacity denied")
@@ -162,7 +161,7 @@ func (a *AWSInventory) Scale(amount int) error {
 		return err
 	}
 
-	a.logger.Infof("aws: scaling %s to %f slaves", groupName, newCapacity)
+	a.logger.Infof("Scaling %s to %f slaves", groupName, newCapacity)
 	return nil
 }
 

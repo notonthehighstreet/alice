@@ -4,12 +4,12 @@ import (
 	"errors"
 	"github.com/andygrunwald/megos"
 	"github.com/notonthehighstreet/autoscaler/manager/monitor"
-	"github.com/op/go-logging"
+	"github.com/sirupsen/logrus"
 	"net/url"
 )
 
 type MesosMonitor struct {
-	logger *logging.Logger
+	logger *logrus.Entry
 	client MesosClient
 }
 
@@ -38,7 +38,7 @@ func NewMesosClient(URL string) (MesosClient, error) {
 }
 
 // NewMesosMaster initialises any new Mesos master. We will use this master to determine the leader of the cluster.
-func New(logger *logging.Logger, mesos MesosClient) *MesosMonitor {
+func New(logger *logrus.Entry, mesos MesosClient) *MesosMonitor {
 	return &MesosMonitor{logger: logger, client: mesos}
 }
 
@@ -77,12 +77,4 @@ func (m *MesosMonitor) Stats() *MesosStats {
 	stats.MemPercent = stats.MemUsed / stats.MemAvailable
 
 	return stats
-}
-
-// LogUsage pipes the current state of the resources available to this Mesos master.
-func (s *MesosStats) LogUsage(log *logging.Logger) {
-	log.Infof("mesos: CPUs used: %.2f of %.2f", s.CPUUsed, s.CPUAvailable)
-	log.Infof("mesos: Memory used: %.2f of %.2f", s.MemUsed, s.MemAvailable)
-	log.Infof("mesos: CPU usage: %.2f%%", s.CPUPercent*100)
-	log.Infof("mesos: Memory usage: %.2f%%", s.MemPercent*100)
 }

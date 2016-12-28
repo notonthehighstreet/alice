@@ -4,12 +4,15 @@ import (
 	"github.com/aws/aws-sdk-go/service/autoscaling"
 	"github.com/notonthehighstreet/autoscaler/manager/inventory"
 	"github.com/notonthehighstreet/autoscaler/manager/inventory/aws"
-	"github.com/op/go-logging"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
-var log = logging.MustGetLogger("autoscaler")
+var log = logrus.WithFields(logrus.Fields{
+	"manager":   "Mock",
+	"inventory": "AWSInventory",
+})
 var mockEc2MetadataClient aws.MockEC2MetadataClient
 var mockAutoscalingClient aws.MockAutoScalingClient
 var asg autoscaling.DescribeAutoScalingGroupsOutput

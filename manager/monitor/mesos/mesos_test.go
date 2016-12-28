@@ -2,14 +2,17 @@ package mesos_test
 
 import (
 	"github.com/andygrunwald/megos"
-	"github.com/op/go-logging"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/notonthehighstreet/autoscaler/manager/monitor/mesos"
 	"testing"
 )
 
-var log = logging.MustGetLogger("autoscaler")
+var log = logrus.WithFields(logrus.Fields{
+	"manager": "Mock",
+	"monitor": "MesosMonitor",
+})
 var mockMesosClient mesos.MockMesosClient
 var state megos.State
 

@@ -10,12 +10,12 @@ import (
 	"github.com/notonthehighstreet/autoscaler/manager/monitor/mesos"
 	"github.com/notonthehighstreet/autoscaler/manager/strategy"
 	"github.com/notonthehighstreet/autoscaler/manager/strategy/threshold"
-	"github.com/op/go-logging"
+	"github.com/sirupsen/logrus"
 )
 
 type Manager struct {
 	Inventory inventory.Inventory
-	logger    *logging.Logger
+	logger    *logrus.Entry
 	Name      string
 	Strategy  strategy.Strategy
 }
@@ -30,7 +30,7 @@ func New() Manager {
 		"mesos.cluster.mem.percent_used": [2]int{20, 80},
 	}
 
-	log := logging.MustGetLogger(name)
+	log := logrus.WithFields(logrus.Fields{"manager": name})
 
 	log.Info("Initialising inventory")
 	s, err := session.NewSession()
@@ -38,17 +38,17 @@ func New() Manager {
 		log.Errorf("%s", err.Error())
 	}
 	s.Config.Region = &region
-	inv := aws.New(log, autoscaling.New(s), ec2metadata.New(s))
+	inv := aws.New(log.WithField("inventory", "AWSInventory"), autoscaling.New(s), ec2metadata.New(s))
 
 	log.Info("Initialising monitor")
 	client, err := mesos.NewMesosClient(mesosUrl)
 	if err != nil {
 		log.Errorf("%s", err)
 	}
-	monitor := mesos.New(log, client)
+	monitor := mesos.New(log.WithField("monitor", "MesosMonitor"), client)
 
 	log.Info("Initialising strategy")
-	str := threshold.New(thresholds, inv, monitor)
+	str := threshold.New(thresholds, inv, monitor, log.WithField("strategy", "ThresholdStrategy"))
 
 	return Manager{Name: name, Strategy: str, Inventory: inv, logger: log}
 }
