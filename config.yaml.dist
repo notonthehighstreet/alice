@@ -27,14 +27,15 @@ managers:
           min: 40
           max: 80
 
-  test:
-    monitor:
-      name: fake
-    inventory:
-      name: fake
-    strategy:
-      name: threshold
-      thresholds:
-        a.fake.metric:
-          min: 25
-          max: 57
+# Uncomment for a manager with a fake monitor and inventory
+#  test:
+#    monitor:
+#      name: fake
+#    inventory:
+#      name: fake
+#    strategy:
+#      name: threshold
+#      thresholds:
+#        a.fake.metric:
+#          min: 25
+#          max: 57
