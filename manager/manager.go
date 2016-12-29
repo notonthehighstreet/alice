@@ -5,6 +5,8 @@ import (
 	"github.com/notonthehighstreet/autoscaler/manager/inventory"
 	"github.com/notonthehighstreet/autoscaler/manager/inventory/aws"
 	"github.com/notonthehighstreet/autoscaler/manager/inventory/fake"
+	"github.com/notonthehighstreet/autoscaler/manager/monitor"
+	"github.com/notonthehighstreet/autoscaler/manager/monitor/fake"
 	"github.com/notonthehighstreet/autoscaler/manager/monitor/mesos"
 	"github.com/notonthehighstreet/autoscaler/manager/strategy"
 	"github.com/notonthehighstreet/autoscaler/manager/strategy/threshold"
@@ -23,7 +25,7 @@ func New(config *viper.Viper, log *logrus.Entry) Manager {
 	inv := inventory.New(config.Sub("inventory"), log)
 
 	log.Info("Initialising monitor")
-	monitor := mesos.New(config.Sub("monitor"), log.WithField("monitor", "MesosMonitor"))
+	monitor := monitor.New(config.Sub("monitor"), log)
 
 	log.Info("Initialising strategy")
 	str := threshold.New(config.Sub("strategy"), inv, monitor, log.WithField("strategy", "ThresholdStrategy"))
@@ -56,6 +58,8 @@ func (m *Manager) Run() error {
 func init() {
 	// Register plugins at load time
 	inventory.Register("aws", aws.New)
-	inventory.Register("fake", fake.New)
+	inventory.Register("fake", fake_inventory.New)
+	monitor.Register("fake", fake_monitor.New)
+	monitor.Register("mesos", mesos.New)
 
 }

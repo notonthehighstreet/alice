@@ -1,4 +1,4 @@
-package fake
+package fake_inventory
 
 import (
 	"github.com/notonthehighstreet/autoscaler/manager/inventory"
