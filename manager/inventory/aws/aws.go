@@ -5,9 +5,12 @@ import (
 	"github.com/aws/aws-sdk-go/service/autoscaling"
 
 	"errors"
+	"github.com/aws/aws-sdk-go/aws/ec2metadata"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/autoscaling/autoscalingiface"
 	"github.com/notonthehighstreet/autoscaler/manager/inventory"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 type EC2MetadataAPI interface {
@@ -15,9 +18,10 @@ type EC2MetadataAPI interface {
 }
 
 type AWSInventory struct {
-	logger         *logrus.Entry
-	autoscalingSvc autoscalingiface.AutoScalingAPI
-	ec2metadataSvc EC2MetadataAPI
+	log            *logrus.Entry
+	config         *viper.Viper
+	AutoscalingSvc autoscalingiface.AutoScalingAPI
+	EC2metadataSvc EC2MetadataAPI
 	groupName      string
 	metadata       AWSMetadata
 }
@@ -28,9 +32,15 @@ type AWSMetadata struct {
 	instanceID   string
 }
 
-func New(logger *logrus.Entry, autoscalingSvc autoscalingiface.AutoScalingAPI, ec2metadataSvc EC2MetadataAPI) *AWSInventory {
-	a := AWSInventory{autoscalingSvc: autoscalingSvc, ec2metadataSvc: ec2metadataSvc, logger: logger}
-	a.RefreshMetadata()
+func New(config *viper.Viper, log *logrus.Entry) *AWSInventory {
+	config.SetDefault("region", "eu-west-1")
+	s, err := session.NewSession()
+	if err != nil {
+		log.Errorf("%s", err.Error())
+	}
+	region := config.GetString("region")
+	s.Config.Region = &region
+	a := AWSInventory{AutoscalingSvc: autoscaling.New(s), EC2metadataSvc: ec2metadata.New(s), log: log, config: config}
 	return &a
 }
 
@@ -100,12 +110,13 @@ func (a *AWSInventory) Status() inventory.Status {
 }
 
 func (a *AWSInventory) describeAutoScalingGroups(params *autoscaling.DescribeAutoScalingGroupsInput) *autoscaling.Group {
+	a.RefreshMetadata()
 	var group *autoscaling.Group
 	done := false
 	for !done {
-		resp, err := a.autoscalingSvc.DescribeAutoScalingGroups(params)
+		resp, err := a.AutoscalingSvc.DescribeAutoScalingGroups(params)
 		if err != nil {
-			a.logger.Fatalf("describeAutoScalingGroups: %v", err)
+			a.log.Fatalf("describeAutoScalingGroups: %v", err)
 		}
 
 		for _, scaleGroup := range resp.AutoScalingGroups {
@@ -123,7 +134,7 @@ func (a *AWSInventory) describeAutoScalingGroups(params *autoscaling.DescribeAut
 	}
 
 	if group == nil {
-		a.logger.Fatal("No auto scaling group available")
+		a.log.Fatal("No auto scaling group available")
 	}
 	return group
 }
@@ -141,9 +152,9 @@ func (a *AWSInventory) Scale(amount int) error {
 	// myGroup contains the autoscaling group we live in.
 	groupName := *group.AutoScalingGroupName
 	currentCapacity := *group.DesiredCapacity
-	a.logger.Infof("Current capacity is: %d", currentCapacity)
+	a.log.Infof("Current capacity is: %d", currentCapacity)
 	newCapacity := currentCapacity + int64(amount)
-	a.logger.Infof("New desired capacity will be: %d", newCapacity)
+	a.log.Infof("New desired capacity will be: %d", newCapacity)
 
 	if newCapacity < *group.MinSize {
 		return errors.New("aws: attempt to scale below minimum capacity denied")
@@ -157,22 +168,22 @@ func (a *AWSInventory) Scale(amount int) error {
 	}
 
 	// A successful response is one that doesn't return an error.
-	if _, err := a.autoscalingSvc.SetDesiredCapacity(scalingParams); err != nil {
+	if _, err := a.AutoscalingSvc.SetDesiredCapacity(scalingParams); err != nil {
 		return err
 	}
 
-	a.logger.Infof("Scaling %s to %f slaves", groupName, newCapacity)
+	a.log.Infof("Scaling %s to %f slaves", groupName, newCapacity)
 	return nil
 }
 
 func (a *AWSInventory) RefreshMetadata() {
-	instanceID, err := a.ec2metadataSvc.GetMetadata("instance-id")
+	instanceID, err := a.EC2metadataSvc.GetMetadata("instance-id")
 	if err != nil {
-		a.logger.Fatal(err)
+		a.log.Fatal(err)
 	}
-	regionWithAZ, err := a.ec2metadataSvc.GetMetadata("placement/availability-zone")
+	regionWithAZ, err := a.EC2metadataSvc.GetMetadata("placement/availability-zone")
 	if err != nil {
-		a.logger.Fatal(err)
+		a.log.Fatal(err)
 	}
 
 	// Strip the AZ from the regionWithAZ to get the region

@@ -1,0 +1,19 @@
+---
+interval: 30s
+managers:
+  mesos_slave:
+    monitor:
+      name: mesos
+      endpoint: http://mesos.service.consul:5050/state
+    inventory:
+      name: aws
+      region: eu-west-1
+    strategy:
+      name: threshold
+      thresholds:
+        mesos.cluster.cpu.percent_used:
+          min: 40
+          max: 80
+        mesos.cluster.mem.percent_used:
+          min: 40
+          max: 80
