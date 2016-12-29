@@ -35,7 +35,7 @@ func setupTest() {
 	}
 	mockMesosClient.On("GetStateFromLeader").Return(state, nil)
 	mockMesosClient.On("DetermineLeader").Return(megos.Pid{}, nil)
-	monitor = mesos.New(viper.New(), log)
+	monitor = mesos.New(viper.New(), log).(*mesos.MesosMonitor)
 	monitor.Client = &mockMesosClient
 }
 

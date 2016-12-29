@@ -31,7 +31,7 @@ type MesosClient interface {
 }
 
 // NewMesosMaster initialises any new Mesos master. We will use this master to determine the leader of the cluster.
-func New(config *viper.Viper, log *logrus.Entry) *MesosMonitor {
+func New(config *viper.Viper, log *logrus.Entry) monitor.Monitor {
 	config.SetDefault("endpoint", "http://mesos.service.consul:5050/state")
 	u, err := url.Parse(config.GetString("endpoint"))
 	if err != nil {

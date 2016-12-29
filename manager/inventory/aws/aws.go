@@ -32,7 +32,7 @@ type AWSMetadata struct {
 	instanceID   string
 }
 
-func New(config *viper.Viper, log *logrus.Entry) *AWSInventory {
+func New(config *viper.Viper, log *logrus.Entry) inventory.Inventory {
 	config.SetDefault("region", "eu-west-1")
 	s, err := session.NewSession()
 	if err != nil {
