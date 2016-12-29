@@ -5,12 +5,14 @@ import (
 	"github.com/andygrunwald/megos"
 	"github.com/notonthehighstreet/autoscaler/manager/monitor"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"net/url"
 )
 
 type MesosMonitor struct {
-	logger *logrus.Entry
-	client MesosClient
+	log    *logrus.Entry
+	Client MesosClient
+	config *viper.Viper
 }
 
 type MesosStats struct {
@@ -25,21 +27,18 @@ type MesosStats struct {
 
 type MesosClient interface {
 	GetStateFromLeader() (*megos.State, error)
-}
-
-func NewMesosClient(URL string) (MesosClient, error) {
-	mesosNode, err := url.Parse(URL)
-	if err != nil {
-		return nil, err
-	}
-	mesos := megos.NewClient([]*url.URL{mesosNode}, nil)
-	mesos.DetermineLeader()
-	return mesos, nil
+	DetermineLeader() (*megos.Pid, error)
 }
 
 // NewMesosMaster initialises any new Mesos master. We will use this master to determine the leader of the cluster.
-func New(logger *logrus.Entry, mesos MesosClient) *MesosMonitor {
-	return &MesosMonitor{logger: logger, client: mesos}
+func New(config *viper.Viper, log *logrus.Entry) *MesosMonitor {
+	config.SetDefault("url", "http://mesos.service.consul:5050/state")
+	u, err := url.Parse(config.GetString("url"))
+	if err != nil {
+		log.Fatalf("Can't create mesos monitor: %v", err)
+	}
+	mesos := megos.NewClient([]*url.URL{u}, nil)
+	return &MesosMonitor{log: log, Client: mesos, config: config}
 }
 
 func (m *MesosMonitor) GetUpdatedMetrics(names []string) (*[]monitor.MetricUpdate, error) {
@@ -60,9 +59,10 @@ func (m *MesosMonitor) GetUpdatedMetrics(names []string) (*[]monitor.MetricUpdat
 }
 
 func (m *MesosMonitor) Stats() *MesosStats {
-	state, err := m.client.GetStateFromLeader()
+	m.Client.DetermineLeader()
+	state, err := m.Client.GetStateFromLeader()
 	if err != nil {
-		m.logger.Fatalf("Error getting mesos stats: %v", err)
+		m.log.Fatalf("Error getting mesos stats: %v", err)
 	}
 
 	stats := &MesosStats{}

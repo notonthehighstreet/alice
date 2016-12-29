@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/notonthehighstreet/autoscaler/manager/monitor/mesos"
+	"github.com/spf13/viper"
 	"testing"
 )
 
@@ -15,6 +16,7 @@ var log = logrus.WithFields(logrus.Fields{
 })
 var mockMesosClient mesos.MockMesosClient
 var state megos.State
+var monitor *mesos.MesosMonitor
 
 func setupTest() {
 	state.Slaves = []megos.Slave{
@@ -32,11 +34,13 @@ func setupTest() {
 		},
 	}
 	mockMesosClient.On("GetStateFromLeader").Return(state, nil)
+	mockMesosClient.On("DetermineLeader").Return(megos.Pid{}, nil)
+	monitor = mesos.New(viper.New(), log)
+	monitor.Client = &mockMesosClient
 }
 
 func TestCalculatesStatistics(t *testing.T) {
 	setupTest()
-	monitor := mesos.New(log, &mockMesosClient)
 	stats := monitor.Stats()
 	assert.Equal(t, 0.25, stats.CPUPercent)
 	assert.Equal(t, 0.5, stats.MemPercent)
@@ -44,7 +48,6 @@ func TestCalculatesStatistics(t *testing.T) {
 
 func TestMesosMaster_GetUpdatedMetrics(t *testing.T) {
 	setupTest()
-	monitor := mesos.New(log, &mockMesosClient)
 	metrics, err := monitor.GetUpdatedMetrics([]string{"mesos.cluster.cpu.percent_used"})
 	assert.Nil(t, err)
 	assert.Equal(t, 25, (*metrics)[0].CurrentReading)

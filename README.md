@@ -12,4 +12,8 @@ Install all the dependencies (`/vendor`):
 
 ## Testing
 
-Run tests like this: `go test ./mesos`
+Run tests like this: `go test ./manager/...`
+
+## Configuration
+
+Copy the `config.yaml.dist` file to `config.yaml`

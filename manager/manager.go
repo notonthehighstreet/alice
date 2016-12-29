@@ -2,55 +2,32 @@ package manager
 
 import (
 	"errors"
-	"github.com/aws/aws-sdk-go/aws/ec2metadata"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/autoscaling"
 	"github.com/notonthehighstreet/autoscaler/manager/inventory"
 	"github.com/notonthehighstreet/autoscaler/manager/inventory/aws"
 	"github.com/notonthehighstreet/autoscaler/manager/monitor/mesos"
 	"github.com/notonthehighstreet/autoscaler/manager/strategy"
 	"github.com/notonthehighstreet/autoscaler/manager/strategy/threshold"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 type Manager struct {
 	Inventory inventory.Inventory
 	logger    *logrus.Entry
-	Name      string
 	Strategy  strategy.Strategy
 }
 
-func New() Manager {
-	// TODO: Pull all this stuff from configuration
-	name := "EC2InstancesManager"
-	mesosUrl := "http://mesos.service.consul:5050/state"
-	region := "eu-west-1"
-	thresholds := map[string][2]int{
-		"mesos.cluster.cpu.percent_used": [2]int{20, 80},
-		"mesos.cluster.mem.percent_used": [2]int{20, 80},
-	}
-
-	log := logrus.WithFields(logrus.Fields{"manager": name})
-
+func New(config *viper.Viper, log *logrus.Entry) Manager {
 	log.Info("Initialising inventory")
-	s, err := session.NewSession()
-	if err != nil {
-		log.Errorf("%s", err.Error())
-	}
-	s.Config.Region = &region
-	inv := aws.New(log.WithField("inventory", "AWSInventory"), autoscaling.New(s), ec2metadata.New(s))
+	inv := aws.New(config.Sub("inventory"), log.WithField("inventory", "AWSInventory"))
 
 	log.Info("Initialising monitor")
-	client, err := mesos.NewMesosClient(mesosUrl)
-	if err != nil {
-		log.Errorf("%s", err)
-	}
-	monitor := mesos.New(log.WithField("monitor", "MesosMonitor"), client)
+	monitor := mesos.New(config.Sub("monitor"), log.WithField("monitor", "MesosMonitor"))
 
 	log.Info("Initialising strategy")
-	str := threshold.New(thresholds, inv, monitor, log.WithField("strategy", "ThresholdStrategy"))
+	str := threshold.New(config.Sub("strategy"), inv, monitor, log.WithField("strategy", "ThresholdStrategy"))
 
-	return Manager{Name: name, Strategy: str, Inventory: inv, logger: log}
+	return Manager{Strategy: str, Inventory: inv, logger: log}
 }
 
 func (m *Manager) Run() error {

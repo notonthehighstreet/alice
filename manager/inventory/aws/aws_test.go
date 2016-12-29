@@ -5,6 +5,7 @@ import (
 	"github.com/notonthehighstreet/autoscaler/manager/inventory"
 	"github.com/notonthehighstreet/autoscaler/manager/inventory/aws"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -16,6 +17,7 @@ var log = logrus.WithFields(logrus.Fields{
 var mockEc2MetadataClient aws.MockEC2MetadataClient
 var mockAutoscalingClient aws.MockAutoScalingClient
 var asg autoscaling.DescribeAutoScalingGroupsOutput
+var inv *aws.AWSInventory
 
 func setupTest() {
 	instanceId := "i-12345678"
@@ -35,47 +37,44 @@ func setupTest() {
 	mockEc2MetadataClient.On("GetMetadata", "placement/availability-zone").Return("eu-west-1b", nil)
 	mockAutoscalingClient.On("DescribeAutoScalingGroups").Return(asg, nil)
 	mockAutoscalingClient.On("SetDesiredCapacity").Return(nil)
+	inv = aws.New(viper.New(), log)
+	inv.AutoscalingSvc = &mockAutoscalingClient
+	inv.EC2metadataSvc = &mockEc2MetadataClient
 }
 
 func TestAWS_Scale(t *testing.T) {
 	setupTest()
-	s := aws.New(log, &mockAutoscalingClient, &mockEc2MetadataClient)
-	err := s.Scale(1)
+	err := inv.Scale(1)
 	assert.Nil(t, err)
 }
 
 func TestAWS_GroupName(t *testing.T) {
 	setupTest()
-	s := aws.New(log, &mockAutoscalingClient, &mockEc2MetadataClient)
-	name := s.GroupName()
+	name := inv.GroupName()
 	assert.Equal(t, name, "foo")
 
 }
 
 func TestAWS_Total(t *testing.T) {
 	setupTest()
-	s := aws.New(log, &mockAutoscalingClient, &mockEc2MetadataClient)
-	total, _ := s.Total()
+	total, _ := inv.Total()
 	assert.Equal(t, total, 1)
 }
 
 func TestAWS_Increase(t *testing.T) {
 	setupTest()
-	s := aws.New(log, &mockAutoscalingClient, &mockEc2MetadataClient)
-	err := s.Increase()
+	err := inv.Increase()
 	assert.Nil(t, err)
 }
 
 func TestAWS_Decrease(t *testing.T) {
 	setupTest()
-	s := aws.New(log, &mockAutoscalingClient, &mockEc2MetadataClient)
-	err := s.Decrease()
+	err := inv.Decrease()
 	assert.Nil(t, err)
 }
 
 func TestAWS_Status(t *testing.T) {
 	setupTest()
-	s := aws.New(log, &mockAutoscalingClient, &mockEc2MetadataClient)
-	state := s.Status()
+	state := inv.Status()
 	assert.Equal(t, state, inventory.OK)
 }
