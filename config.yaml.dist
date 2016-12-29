@@ -1,13 +1,22 @@
 ---
+# How long to wait between executions
 interval: 30s
+
+# A manager is responsible for a single group of resources (web servers, instances of an application, slaves etc).
+# Every manager needs a monitor that provides metrics, a strategy to interpret them, and an inventory to act upon (scale up/down)
 managers:
-  mesos_slave:
+
+  # Unique name of this manager
+  example:
+
     monitor:
-      name: mesos
+      name: mesos  # Name of the plugin to load
       endpoint: http://mesos.service.consul:5050/state
+
     inventory:
       name: aws
       region: eu-west-1
+
     strategy:
       name: threshold
       thresholds:
@@ -17,3 +26,15 @@ managers:
         mesos.cluster.mem.percent_used:
           min: 40
           max: 80
+
+  test:
+    monitor:
+      name: fake
+    inventory:
+      name: fake
+    strategy:
+      name: threshold
+      thresholds:
+        a.fake.metric:
+          min: 25
+          max: 57
