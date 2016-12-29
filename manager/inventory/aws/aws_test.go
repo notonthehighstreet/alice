@@ -37,7 +37,7 @@ func setupTest() {
 	mockEc2MetadataClient.On("GetMetadata", "placement/availability-zone").Return("eu-west-1b", nil)
 	mockAutoscalingClient.On("DescribeAutoScalingGroups").Return(asg, nil)
 	mockAutoscalingClient.On("SetDesiredCapacity").Return(nil)
-	inv = aws.New(viper.New(), log)
+	inv = aws.New(viper.New(), log).(*aws.AWSInventory)
 	inv.AutoscalingSvc = &mockAutoscalingClient
 	inv.EC2metadataSvc = &mockEc2MetadataClient
 }
