@@ -16,3 +16,7 @@ import:
   version: ^0.11.0
   repo: https://github.com/sirupsen/logrus.git
 - package: github.com/spf13/viper
+- package: github.com/heirko/go-contrib
+  subpackages:
+  - logrusHelper
+- package: github.com/gogap/logrus_mate

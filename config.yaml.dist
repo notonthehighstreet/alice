@@ -8,7 +8,6 @@ managers:
 
   # Unique name of this manager
   example:
-
     monitor:
       name: mesos  # Name of the plugin to load
       endpoint: http://mesos.service.consul:5050/state
@@ -39,3 +38,9 @@ managers:
 #        a.fake.metric:
 #          min: 25
 #          max: 57
+
+# Logging configuration
+logging:
+  level: info
+  formatter:
+    name: text

@@ -1,5 +1,5 @@
-hash: 9c36b7775ab1e70844563279f192a9ef01eee2486ab562eb47baafe147e7c000
-updated: 2016-12-30T14:47:12.897549222Z
+hash: 8313366cf375e9558d43d7619c360e794abd2462d9e175e11d8c1e00c076f693
+updated: 2016-12-30T14:52:37.210948122Z
 imports:
 - name: github.com/andygrunwald/megos
   version: 01814b52c25a0ea60ab4908f723cc9ee3bbfc495
@@ -39,6 +39,12 @@ imports:
   version: fd9ec7deca8bf46ecd2a795baaacf2b3a9be1197
 - name: github.com/go-ini/ini
   version: 6f66b0e091edb3c7b380f7c4f0f884274d550b67
+- name: github.com/gogap/env_json
+  version: 86150085ddbeee9e9a1808c00d19b4310aa8f7fe
+- name: github.com/gogap/env_strings
+  version: 65990cae6fff8fd03f408f2410198a6f755b6b53
+- name: github.com/gogap/logrus_mate
+  version: b8b09b6ee2b6d98254029dffd979bd3f561f042a
 - name: github.com/hashicorp/hcl
   version: 80e628d796135357b3d2e33a985c666b9f35eee1
   subpackages:
@@ -50,6 +56,12 @@ imports:
   - json/parser
   - json/scanner
   - json/token
+- name: github.com/heirko/go-contrib
+  version: 4ec8c017dddf80cc0b670f233c051e588e3bb7c4
+  subpackages:
+  - logrusHelper
+- name: github.com/hoisie/redis
+  version: b5c6e81454e0395c280f220d82a6854fd0fcf42e
 - name: github.com/jmespath/go-jmespath
   version: bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d
 - name: github.com/magiconair/properties
