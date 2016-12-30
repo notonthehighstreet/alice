@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/Sirupsen/logrus"
+	"github.com/heirko/go-contrib/logrusHelper"
 	"github.com/notonthehighstreet/autoscaler/manager"
 	conf "github.com/spf13/viper"
 	"time"
@@ -9,6 +10,8 @@ import (
 
 func main() {
 	configure()
+	var c = logrusHelper.UnmarshalConfiguration(conf.Sub("logging")) // Unmarshal configuration from Viper
+	logrusHelper.SetConfig(logrus.StandardLogger(), c)               // for e.g. apply it to logrus default instance
 	managers := make(map[string]manager.Manager)
 
 	for name := range conf.GetStringMap("managers") {
@@ -30,4 +33,5 @@ func configure() {
 	}
 
 	conf.SetDefault("interval", 2*time.Minute)
+	conf.SetDefault("logging.level", "info")
 }
