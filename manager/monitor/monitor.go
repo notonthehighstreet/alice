@@ -1,7 +1,7 @@
 package monitor
 
 import (
-	"github.com/sirupsen/logrus"
+	"github.com/Sirupsen/logrus"
 	"github.com/spf13/viper"
 	"strings"
 )

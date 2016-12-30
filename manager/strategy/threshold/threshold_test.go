@@ -1,11 +1,11 @@
 package threshold_test
 
 import (
+	"github.com/Sirupsen/logrus"
 	"github.com/notonthehighstreet/autoscaler/manager/inventory"
 	"github.com/notonthehighstreet/autoscaler/manager/monitor"
 	"github.com/notonthehighstreet/autoscaler/manager/strategy"
 	"github.com/notonthehighstreet/autoscaler/manager/strategy/threshold"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"testing"

@@ -1,8 +1,8 @@
 package main
 
 import (
+	"github.com/Sirupsen/logrus"
 	"github.com/notonthehighstreet/autoscaler/manager"
-	"github.com/sirupsen/logrus"
 	conf "github.com/spf13/viper"
 	"time"
 )

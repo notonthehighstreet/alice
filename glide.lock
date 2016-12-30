@@ -1,10 +1,10 @@
-hash: 81c594e25b7b3150a6ee657131bcb18a1f1f7f61602bf20da2c1e05e634ff367
-updated: 2016-12-28T14:06:01.496091191Z
+hash: 9c36b7775ab1e70844563279f192a9ef01eee2486ab562eb47baafe147e7c000
+updated: 2016-12-30T14:47:12.897549222Z
 imports:
 - name: github.com/andygrunwald/megos
   version: 01814b52c25a0ea60ab4908f723cc9ee3bbfc495
 - name: github.com/aws/aws-sdk-go
-  version: 1e6377549087b490b693300bce2c5e286dc87740
+  version: 36670f6ab1769ad77fa5f7e2c194398733503635
   subpackages:
   - aws
   - aws/awserr
@@ -66,8 +66,9 @@ imports:
   version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
   subpackages:
   - difflib
-- name: github.com/sirupsen/logrus
+- name: github.com/Sirupsen/logrus
   version: d26492970760ca5d33129d2d799e34be5c4782eb
+  repo: https://github.com/sirupsen/logrus.git
 - name: github.com/spf13/afero
   version: 90dd71edc4d0a8b3511dc12ea15d617d03be09e0
   subpackages:

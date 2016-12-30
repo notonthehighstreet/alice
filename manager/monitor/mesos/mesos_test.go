@@ -1,8 +1,8 @@
 package mesos_test
 
 import (
+	"github.com/Sirupsen/logrus"
 	"github.com/andygrunwald/megos"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/notonthehighstreet/autoscaler/manager/monitor/mesos"

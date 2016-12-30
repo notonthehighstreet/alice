@@ -1,8 +1,8 @@
 package inventory_test
 
 import (
+	"github.com/Sirupsen/logrus"
 	"github.com/notonthehighstreet/autoscaler/manager/inventory"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"testing"

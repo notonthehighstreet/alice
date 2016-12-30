@@ -2,9 +2,9 @@ package mesos
 
 import (
 	"errors"
+	"github.com/Sirupsen/logrus"
 	"github.com/andygrunwald/megos"
 	"github.com/notonthehighstreet/autoscaler/manager/monitor"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"net/url"
 )

@@ -5,11 +5,11 @@ import (
 	"github.com/aws/aws-sdk-go/service/autoscaling"
 
 	"errors"
+	"github.com/Sirupsen/logrus"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/autoscaling/autoscalingiface"
 	"github.com/notonthehighstreet/autoscaler/manager/inventory"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 

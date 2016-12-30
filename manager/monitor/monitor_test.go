@@ -1,8 +1,8 @@
 package monitor_test
 
 import (
+	"github.com/Sirupsen/logrus"
 	"github.com/notonthehighstreet/autoscaler/manager/monitor"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"testing"

@@ -2,6 +2,7 @@ package manager
 
 import (
 	"errors"
+	"github.com/Sirupsen/logrus"
 	"github.com/notonthehighstreet/autoscaler/manager/inventory"
 	"github.com/notonthehighstreet/autoscaler/manager/inventory/aws"
 	"github.com/notonthehighstreet/autoscaler/manager/inventory/fake"
@@ -10,7 +11,6 @@ import (
 	"github.com/notonthehighstreet/autoscaler/manager/monitor/mesos"
 	"github.com/notonthehighstreet/autoscaler/manager/strategy"
 	"github.com/notonthehighstreet/autoscaler/manager/strategy/threshold"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
