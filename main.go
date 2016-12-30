@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/Sirupsen/logrus"
+	"github.com/evalphobia/logrus_fluent"
 	"github.com/heirko/go-contrib/logrusHelper"
 	"github.com/notonthehighstreet/autoscaler/manager"
 	conf "github.com/spf13/viper"
@@ -10,8 +11,7 @@ import (
 
 func main() {
 	configure()
-	var c = logrusHelper.UnmarshalConfiguration(conf.Sub("logging")) // Unmarshal configuration from Viper
-	logrusHelper.SetConfig(logrus.StandardLogger(), c)               // for e.g. apply it to logrus default instance
+	initLogger()
 	managers := make(map[string]manager.Manager)
 
 	for name := range conf.GetStringMap("managers") {
@@ -34,4 +34,26 @@ func configure() {
 
 	conf.SetDefault("interval", 2*time.Minute)
 	conf.SetDefault("logging.level", "info")
+}
+
+func initLogger() {
+	loggingConf := conf.Sub("logging")
+	var c = logrusHelper.UnmarshalConfiguration(loggingConf) // Unmarshal configuration from Viper
+	logrusHelper.SetConfig(logrus.StandardLogger(), c)       // apply it to logrus default instance
+
+	// We're on our own for fluentd
+	if loggingConf.IsSet("fluentd") {
+		fluentConf := loggingConf.Sub("fluentd")
+
+		fluentConf.SetDefault("host", "localhost")
+		fluentConf.SetDefault("port", 24224)
+		fluentConf.SetDefault("tag", "service.autoscaler")
+
+		hook, err := logrus_fluent.New(fluentConf.GetString("host"), fluentConf.GetInt("port"))
+		if err != nil {
+			logrus.Panic(err)
+		}
+		hook.SetTag(fluentConf.GetString("tag"))
+		logrus.AddHook(hook)
+	}
 }
