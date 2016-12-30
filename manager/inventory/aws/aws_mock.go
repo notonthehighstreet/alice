@@ -23,6 +23,12 @@ func (m *MockAutoScalingClient) SetDesiredCapacity(p *autoscaling.SetDesiredCapa
 	return &output, args.Error(0)
 }
 
+func (m *MockAutoScalingClient) DescribeScalingActivities(p *autoscaling.DescribeScalingActivitiesInput) (*autoscaling.DescribeScalingActivitiesOutput, error) {
+	args := m.Mock.Called()
+	output := args.Get(0).(*autoscaling.DescribeScalingActivitiesOutput)
+	return output, args.Error(1)
+}
+
 type MockEC2MetadataClient struct {
 	mock.Mock
 }
