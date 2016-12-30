@@ -53,60 +53,46 @@ func (a *AWSInventory) Total() (int, error) {
 }
 
 func (a *AWSInventory) Increase() error {
-	switch a.Status() {
-	case inventory.UPDATING:
-		return errors.New("Won't scale servers while changes are in progress")
-	case inventory.FAILED:
-		return errors.New("Won't scale servers while something seems to be in a failed state")
-	case inventory.OK:
-		return a.Scale(1)
-	}
-	return errors.New("Unknown status")
+	return a.Scale(+1)
 }
 
 func (a *AWSInventory) Decrease() error {
-	switch a.Status() {
-	case inventory.UPDATING:
-		return errors.New("Won't scale servers while changes are in progress")
-	case inventory.FAILED:
-		return errors.New("Won't scale servers while something seems to be in a failed state")
-	case inventory.OK:
-		return a.Scale(-1)
-	}
-	return errors.New("Unknown status")
+	return a.Scale(-1)
 }
 
 func (a *AWSInventory) Status() inventory.Status {
-	// Use state of instances to determine health. Looks like this:
-	//"Instances": [
-	//    {
-	//        "ProtectedFromScaleIn": false,
-	//        "AvailabilityZone": "eu-west-1b",
-	//        "InstanceId": "i-08599d089fe15af88",
-	//        "HealthStatus": "Healthy",
-	//        "LifecycleState": "Pending",
-	//        "LaunchConfigurationName": "qa-full-lights-mesos-slave-LaunchConfig-QV7DAOP4GS35"
-	//    },
-	//    {
-	//        "ProtectedFromScaleIn": false,
-	//        "AvailabilityZone": "eu-west-1a",
-	//        "InstanceId": "i-0dacc77123aca3074",
-	//        "HealthStatus": "Healthy",
-	//        "LifecycleState": "Pending",
-	//        "LaunchConfigurationName": "qa-full-lights-mesos-slave-LaunchConfig-QV7DAOP4GS35"
-	//    },
-	//    {
-	//        "ProtectedFromScaleIn": false,
-	//        "AvailabilityZone": "eu-west-1c",
-	//        "InstanceId": "i-0dda606d86e6fd163",
-	//        "HealthStatus": "Healthy",
-	//        "LifecycleState": "InService",
-	//        "LaunchConfigurationName": "qa-full-lights-mesos-slave-LaunchConfig-QV7DAOP4GS35"
-	//    }
-	//],
-	// Also there's "ScalingActivityInProgress: Scaling activity 15449fcf-acdb-4ca0-abc4-1ab111203267 is in progress and blocks this action"
-	// describe-scaling-activities for that
-	return inventory.OK
+	params := &autoscaling.DescribeScalingActivitiesInput{AutoScalingGroupName: aws.String(a.GroupName())}
+	status := inventory.OK
+	done := false
+	for !done {
+		resp, err := a.AutoscalingSvc.DescribeScalingActivities(params)
+		if err != nil {
+			a.log.Fatalf("%v", err)
+		}
+		a.log.Debugf("Checking %v pre-existing scaling activites", len(resp.Activities))
+		for _, activity := range resp.Activities {
+			switch *activity.StatusCode {
+			case autoscaling.ScalingActivityStatusCodeSuccessful:
+				a.log.Debugln("Ignoring a successful activity")
+				continue
+			case autoscaling.ScalingActivityStatusCodeCancelled:
+				a.log.Debugln("Ignoring a cancelled activity")
+				continue
+			case autoscaling.ScalingActivityStatusCodeFailed:
+				a.log.Debugln("Found a failed activity")
+				return inventory.FAILED
+			default:
+				a.log.Debugln("Found an in-progress activity")
+				status = inventory.UPDATING
+			}
+		}
+		if resp.NextToken == nil {
+			done = true
+		} else {
+			params.NextToken = resp.NextToken
+		}
+	}
+	return status
 }
 
 func (a *AWSInventory) describeAutoScalingGroups(params *autoscaling.DescribeAutoScalingGroupsInput) *autoscaling.Group {
@@ -148,32 +134,39 @@ func (a *AWSInventory) GroupName() string {
 }
 
 func (a *AWSInventory) Scale(amount int) error {
-	group := a.describeAutoScalingGroups(&autoscaling.DescribeAutoScalingGroupsInput{})
-	// myGroup contains the autoscaling group we live in.
-	groupName := *group.AutoScalingGroupName
-	currentCapacity := *group.DesiredCapacity
-	a.log.Infof("Current capacity is: %d", currentCapacity)
-	newCapacity := currentCapacity + int64(amount)
-	a.log.Infof("New desired capacity will be: %d", newCapacity)
+	// Check inventory status before trying to scale anything
+	var e error
+	switch a.Status() {
+	case inventory.UPDATING:
+		e = errors.New("Won't scale servers while changes are in progress")
+	case inventory.FAILED:
+		e = errors.New("Won't scale servers while something seems to be in a failed state")
+	case inventory.OK:
+		group := a.describeAutoScalingGroups(&autoscaling.DescribeAutoScalingGroupsInput{})
+		currentCapacity := *group.DesiredCapacity
+		a.log.Infof("Current capacity is: %d", currentCapacity)
+		newCapacity := currentCapacity + int64(amount)
+		a.log.Infof("New desired capacity will be: %d", newCapacity)
 
-	if newCapacity < *group.MinSize {
-		return errors.New("aws: attempt to scale below minimum capacity denied")
+		if newCapacity < *group.MinSize {
+			e = errors.New("Attempt to scale below minimum capacity denied")
+			break
+		}
+		scalingParams := &autoscaling.SetDesiredCapacityInput{
+			AutoScalingGroupName: aws.String(a.GroupName()),
+			DesiredCapacity:      aws.Int64(newCapacity),
+			HonorCooldown:        aws.Bool(false),
+		}
+		_, e = a.AutoscalingSvc.SetDesiredCapacity(scalingParams)
+	default:
+		e = errors.New("Unknown status")
 	}
-
-	// This will fail if there's an operation already in place.
-	scalingParams := &autoscaling.SetDesiredCapacityInput{
-		AutoScalingGroupName: aws.String(groupName),
-		DesiredCapacity:      aws.Int64(newCapacity),
-		HonorCooldown:        aws.Bool(true),
+	if e == nil {
+		a.log.Infof("Scaling %v by %v", a.GroupName(), amount)
+	} else {
+		a.log.Errorln(e.Error())
 	}
-
-	// A successful response is one that doesn't return an error.
-	if _, err := a.AutoscalingSvc.SetDesiredCapacity(scalingParams); err != nil {
-		return err
-	}
-
-	a.log.Infof("Scaling %s to %f slaves", groupName, newCapacity)
-	return nil
+	return e
 }
 
 func (a *AWSInventory) RefreshMetadata() {

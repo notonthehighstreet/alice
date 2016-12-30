@@ -1,6 +1,7 @@
 package aws_test
 
 import (
+	amz "github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/autoscaling"
 	"github.com/notonthehighstreet/autoscaler/manager/inventory"
 	"github.com/notonthehighstreet/autoscaler/manager/inventory/aws"
@@ -17,26 +18,40 @@ var log = logrus.WithFields(logrus.Fields{
 var mockEc2MetadataClient aws.MockEC2MetadataClient
 var mockAutoscalingClient aws.MockAutoScalingClient
 var asg autoscaling.DescribeAutoScalingGroupsOutput
+var asgScalingActivities autoscaling.DescribeScalingActivitiesOutput
 var inv *aws.AWSInventory
 
 func setupTest() {
-	instanceId := "i-12345678"
-	autoScalingGroupName := "foo"
-	desiredCapacity := int64(10)
-	minSize := int64(1)
 	asg.AutoScalingGroups = []*autoscaling.Group{
 		{
-			Instances:            []*autoscaling.Instance{{InstanceId: &instanceId}},
-			AutoScalingGroupName: &autoScalingGroupName,
-			DesiredCapacity:      &desiredCapacity,
-			MinSize:              &minSize,
+			Instances:            []*autoscaling.Instance{{InstanceId: amz.String("i-12345678")}},
+			AutoScalingGroupName: amz.String("foo"),
+			DesiredCapacity:      amz.Int64(10),
+			MinSize:              amz.Int64(1),
 		},
 	}
 	asg.NextToken = nil
+	asgScalingActivities.Activities = []*autoscaling.Activity{
+		{
+			ActivityId: amz.String("activity-id-1"),
+			StatusCode: amz.String(autoscaling.ScalingActivityStatusCodeSuccessful),
+		},
+		{
+			ActivityId: amz.String("activity-id-2"),
+			StatusCode: amz.String(autoscaling.ScalingActivityStatusCodeSuccessful),
+		},
+		{
+			ActivityId: amz.String("activity-id-3"),
+			StatusCode: amz.String(autoscaling.ScalingActivityStatusCodeSuccessful),
+		},
+	}
+	asgScalingActivities.NextToken = nil
 	mockEc2MetadataClient.On("GetMetadata", "instance-id").Return("i-12345678", nil)
 	mockEc2MetadataClient.On("GetMetadata", "placement/availability-zone").Return("eu-west-1b", nil)
 	mockAutoscalingClient.On("DescribeAutoScalingGroups").Return(asg, nil)
+	mockAutoscalingClient.On("DescribeScalingActivities").Return(&asgScalingActivities, nil)
 	mockAutoscalingClient.On("SetDesiredCapacity").Return(nil)
+	log.Logger.Level = logrus.DebugLevel
 	inv = aws.New(viper.New(), log).(*aws.AWSInventory)
 	inv.AutoscalingSvc = &mockAutoscalingClient
 	inv.EC2metadataSvc = &mockEc2MetadataClient
@@ -63,18 +78,31 @@ func TestAWS_Total(t *testing.T) {
 
 func TestAWS_Increase(t *testing.T) {
 	setupTest()
-	err := inv.Increase()
-	assert.Nil(t, err)
+	assert.Nil(t, inv.Increase())
+	asgScalingActivities.Activities[0].StatusCode = amz.String(autoscaling.ScalingActivityStatusCodeInProgress)
+	assert.Error(t, inv.Increase())
 }
 
 func TestAWS_Decrease(t *testing.T) {
 	setupTest()
-	err := inv.Decrease()
-	assert.Nil(t, err)
+	assert.Nil(t, inv.Decrease())
+	asgScalingActivities.Activities[0].StatusCode = amz.String(autoscaling.ScalingActivityStatusCodeInProgress)
+	assert.Error(t, inv.Decrease())
 }
 
 func TestAWS_Status(t *testing.T) {
+	failedActivity := &autoscaling.Activity{
+		ActivityId: amz.String("failed-activity"),
+		StatusCode: amz.String(autoscaling.ScalingActivityStatusCodeFailed),
+	}
+	updatingActivity := &autoscaling.Activity{
+		ActivityId: amz.String("updating-activity"),
+		StatusCode: amz.String(autoscaling.ScalingActivityStatusCodeInProgress),
+	}
 	setupTest()
-	state := inv.Status()
-	assert.Equal(t, state, inventory.OK)
+	assert.Equal(t, inventory.OK, inv.Status())
+	asgScalingActivities.Activities = append(asgScalingActivities.Activities, updatingActivity)
+	assert.Equal(t, inventory.UPDATING, inv.Status())
+	asgScalingActivities.Activities = append(asgScalingActivities.Activities, failedActivity)
+	assert.Equal(t, inventory.FAILED, inv.Status())
 }
