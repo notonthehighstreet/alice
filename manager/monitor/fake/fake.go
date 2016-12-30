@@ -1,8 +1,8 @@
 package fake_monitor
 
 import (
+	"github.com/Sirupsen/logrus"
 	"github.com/notonthehighstreet/autoscaler/manager/monitor"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"math"
 )
