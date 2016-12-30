@@ -8,8 +8,6 @@ import:
   - aws/ec2metadata
   - aws/session
   - service/autoscaling
-- package: github.com/op/go-logging
-  version: ^1.0.0
 - package: github.com/stretchr/testify
   version: ^1.1.4
 - package: github.com/Sirupsen/logrus
@@ -20,3 +18,5 @@ import:
   subpackages:
   - logrusHelper
 - package: github.com/gogap/logrus_mate
+- package: github.com/evalphobia/logrus_fluent
+  version: ^0.1.0

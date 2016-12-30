@@ -1,5 +1,5 @@
-hash: 8313366cf375e9558d43d7619c360e794abd2462d9e175e11d8c1e00c076f693
-updated: 2016-12-30T14:52:37.210948122Z
+hash: 47fad8acb4093285b80d942459920eab21a77555fd1b35f6d40521dc45dc7128
+updated: 2016-12-30T16:08:50.859357108Z
 imports:
 - name: github.com/andygrunwald/megos
   version: 01814b52c25a0ea60ab4908f723cc9ee3bbfc495
@@ -35,6 +35,12 @@ imports:
   version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
   subpackages:
   - spew
+- name: github.com/evalphobia/logrus_fluent
+  version: 86bb83d119886b935a52194cad48fd01815b0125
+- name: github.com/fluent/fluent-logger-golang
+  version: 28bdb662295c1b7aca09c1a4edbf9430010775a9
+  subpackages:
+  - fluent
 - name: github.com/fsnotify/fsnotify
   version: fd9ec7deca8bf46ecd2a795baaacf2b3a9be1197
 - name: github.com/go-ini/ini
@@ -68,12 +74,12 @@ imports:
   version: 9c47895dc1ce54302908ab8a43385d1f5df2c11c
 - name: github.com/mitchellh/mapstructure
   version: bfdb1a85537d60bc7e954e600c250219ea497417
-- name: github.com/op/go-logging
-  version: b2cb9fa56473e98db8caba80237377e83fe44db5
 - name: github.com/pelletier/go-buffruneio
   version: df1e16fde7fc330a0ca68167c23bf7ed6ac31d6d
 - name: github.com/pelletier/go-toml
   version: 017119f7a78a0b5fc0ea39ef6be09f03acf3345d
+- name: github.com/philhofer/fwd
+  version: 98c11a7a6ec829d672b03833c3d69a7fae1ca972
 - name: github.com/pmezard/go-difflib
   version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
   subpackages:
@@ -100,6 +106,10 @@ imports:
   subpackages:
   - assert
   - mock
+- name: github.com/tinylib/msgp
+  version: 38a6f61a768dc24552dad94611923841b53acc4f
+  subpackages:
+  - msgp
 - name: golang.org/x/sys
   version: d75a52659825e75fff6158388dddc6a5b04f9ba5
   subpackages:
