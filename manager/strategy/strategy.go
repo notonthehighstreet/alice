@@ -1,7 +1,7 @@
 package strategy
 
 type Strategy interface {
-	Evaluate() (Recommendation, error)
+	Evaluate() (*Recommendation, error)
 }
 
 type Recommendation int
