@@ -37,7 +37,7 @@ func (m *Manager) Run() error {
 	m.logger.Info("Executing strategy")
 	rec, err := m.Strategy.Evaluate()
 	if err == nil {
-		switch rec {
+		switch *rec {
 		case strategy.SCALEUP:
 			m.logger.Info("Scaling up")
 			err = m.Inventory.Increase()

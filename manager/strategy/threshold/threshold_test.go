@@ -40,17 +40,17 @@ func TestThresholdStrategy_Evaluate(t *testing.T) {
 	setupTest()
 	recommendation, error := thr.Evaluate()
 	assert.Nil(t, error)
-	assert.Equal(t, recommendation, strategy.SCALEUP) // because of disk_percent
+	assert.Equal(t, *recommendation, strategy.SCALEUP) // because of disk_percent
 
 	thr.Config.Set("thresholds.disk_percent.min", 100)
 	thr.Config.Set("thresholds.disk_percent.max", 100)
 	recommendation, error = thr.Evaluate()
 	assert.Nil(t, error)
-	assert.Equal(t, recommendation, strategy.HOLD) // because of mem_percent
+	assert.Equal(t, *recommendation, strategy.HOLD) // because of mem_percent
 
 	thr.Config.Set("thresholds.mem_percent.min", 100)
 	thr.Config.Set("thresholds.mem_percent.max", 100)
 	recommendation, error = thr.Evaluate()
 	assert.Nil(t, error)
-	assert.Equal(t, recommendation, strategy.SCALEDOWN) // because of all
+	assert.Equal(t, *recommendation, strategy.SCALEDOWN) // because of all
 }
