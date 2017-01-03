@@ -45,6 +45,6 @@ logging:
   formatter:
     name: text
   fluentd:
-    host: localhost
+    host: 172.17.42.1
     port: 24224
     tag: core.autoscaler
