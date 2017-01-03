@@ -10,6 +10,7 @@ import (
 	"github.com/notonthehighstreet/autoscaler/manager/monitor/fake"
 	"github.com/notonthehighstreet/autoscaler/manager/monitor/mesos"
 	"github.com/notonthehighstreet/autoscaler/manager/strategy"
+	"github.com/notonthehighstreet/autoscaler/manager/strategy/ratio"
 	"github.com/notonthehighstreet/autoscaler/manager/strategy/threshold"
 	"github.com/spf13/viper"
 )
@@ -28,7 +29,7 @@ func New(config *viper.Viper, log *logrus.Entry) Manager {
 	monitor := monitor.New(config.Sub("monitor"), log)
 
 	log.Info("Initialising strategy")
-	str := threshold.New(config.Sub("strategy"), inv, monitor, log.WithField("strategy", "ThresholdStrategy"))
+	str := strategy.New(config.Sub("strategy"), inv, monitor, log)
 
 	return Manager{Strategy: str, Inventory: inv, logger: log}
 }
@@ -37,7 +38,7 @@ func (m *Manager) Run() error {
 	m.logger.Info("Executing strategy")
 	rec, err := m.Strategy.Evaluate()
 	if err == nil {
-		switch rec {
+		switch *rec {
 		case strategy.SCALEUP:
 			m.logger.Info("Scaling up")
 			err = m.Inventory.Increase()
@@ -61,5 +62,6 @@ func init() {
 	inventory.Register("fake", fake_inventory.New)
 	monitor.Register("fake", fake_monitor.New)
 	monitor.Register("mesos", mesos.New)
-
+	strategy.Register("ratio", ratio.New)
+	strategy.Register("threshold", threshold.New)
 }

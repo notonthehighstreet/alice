@@ -19,11 +19,11 @@ type ThresholdStrategy struct {
 	log       *logrus.Entry
 }
 
-func New(config *viper.Viper, inv inventory.Inventory, mon monitor.Monitor, log *logrus.Entry) *ThresholdStrategy {
+func New(config *viper.Viper, inv inventory.Inventory, mon monitor.Monitor, log *logrus.Entry) strategy.Strategy {
 	return &ThresholdStrategy{Config: config, Inventory: inv, Monitor: mon, log: log}
 }
 
-func (p *ThresholdStrategy) Evaluate() (strategy.Recommendation, error) {
+func (p *ThresholdStrategy) Evaluate() (*strategy.Recommendation, error) {
 	finalRecommendation := strategy.SCALEDOWN
 
 	var metricNames []string
@@ -32,7 +32,7 @@ func (p *ThresholdStrategy) Evaluate() (strategy.Recommendation, error) {
 	}
 	metricUpdates, err := p.Monitor.GetUpdatedMetrics(metricNames)
 	if err != nil {
-		return finalRecommendation, err
+		return nil, err
 	}
 	for _, metric := range *metricUpdates {
 		metricConfig := p.Config.Sub("thresholds." + metric.Name)
@@ -47,7 +47,7 @@ func (p *ThresholdStrategy) Evaluate() (strategy.Recommendation, error) {
 		case metric.CurrentReading > max:
 			metricRecommendation = strategy.SCALEUP
 		default:
-			return finalRecommendation, errors.New("Strategy: Something went wrong")
+			return &finalRecommendation, errors.New("Strategy: Something went wrong")
 		}
 		p.log.Debugf("Metric: %v value: %v min: %v max: %v. Suggests %v.", metric.Name, metric.CurrentReading, min, max, metricRecommendation)
 		if finalRecommendation < metricRecommendation { // Worst case scenario wins
@@ -55,6 +55,6 @@ func (p *ThresholdStrategy) Evaluate() (strategy.Recommendation, error) {
 		}
 	}
 	p.log.Debugf("Recommending %v as safest option", finalRecommendation)
-	return finalRecommendation, nil
+	return &finalRecommendation, nil
 
 }
