@@ -40,12 +40,12 @@ func (m *Manager) Run() error {
 	if err == nil {
 		switch *rec {
 		case strategy.SCALEUP:
-			m.logger.Info("Scaling up")
+			m.logger.Warn("Scaling up")
 			err = m.Inventory.Increase()
 		case strategy.HOLD:
 			m.logger.Info("Doing nothing")
 		case strategy.SCALEDOWN:
-			m.logger.Info("Scaling down")
+			m.logger.Warn("Scaling down")
 			err = m.Inventory.Decrease()
 		default:
 			err = errors.New("Unknown recommendation")
