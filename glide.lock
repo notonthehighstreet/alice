@@ -1,5 +1,5 @@
-hash: 47fad8acb4093285b80d942459920eab21a77555fd1b35f6d40521dc45dc7128
-updated: 2016-12-30T16:08:50.859357108Z
+hash: f8e2bcfe8441109e2af4afe6e2b8b58f433298533e8b4fa40e18a2c3338e8654
+updated: 2017-01-03T12:43:31.55723583Z
 imports:
 - name: github.com/andygrunwald/megos
   version: 01814b52c25a0ea60ab4908f723cc9ee3bbfc495
@@ -70,6 +70,10 @@ imports:
   version: b5c6e81454e0395c280f220d82a6854fd0fcf42e
 - name: github.com/jmespath/go-jmespath
   version: bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d
+- name: github.com/johntdyer/slack-go
+  version: 88736fd63eed11c942b478c3182bdd2f152971e5
+- name: github.com/johntdyer/slackrus
+  version: 9c71df2f4ceb8d8b0bbb12c65c56a8e03e34adba
 - name: github.com/magiconair/properties
   version: 9c47895dc1ce54302908ab8a43385d1f5df2c11c
 - name: github.com/mitchellh/mapstructure

@@ -4,6 +4,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/evalphobia/logrus_fluent"
 	"github.com/heirko/go-contrib/logrusHelper"
+	"github.com/johntdyer/slackrus"
 	"github.com/notonthehighstreet/autoscaler/manager"
 	conf "github.com/spf13/viper"
 	"time"
@@ -55,5 +56,22 @@ func initLogger() {
 		}
 		hook.SetTag(fluentConf.GetString("tag"))
 		logrus.AddHook(hook)
+	}
+	if loggingConf.IsSet("slack") {
+		slackConf := loggingConf.Sub("slack")
+		slackConf.SetDefault("username", "autoscaler")
+		slackConf.SetDefault("emoji", ":robot_face:")
+		slackConf.SetDefault("channel", "#slack-testing")
+		if !slackConf.IsSet("hook_url") {
+			logrus.Fatalln("Must provide hook_url for slack.")
+		}
+		logrus.AddHook(&slackrus.SlackrusHook{
+			HookURL:        slackConf.GetString("hook_url"),
+			AcceptedLevels: slackrus.LevelThreshold(logrus.WarnLevel),
+			Channel:        slackConf.GetString("channel"),
+			IconEmoji:      slackConf.GetString("emoji"),
+			Username:       slackConf.GetString("username"),
+		})
+
 	}
 }
