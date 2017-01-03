@@ -17,11 +17,19 @@ import (
 
 type Manager struct {
 	Inventory inventory.Inventory
-	logger    *logrus.Entry
+	Logger    *logrus.Entry
 	Strategy  strategy.Strategy
+	Config    *viper.Viper
 }
 
 func New(config *viper.Viper, log *logrus.Entry) Manager {
+	requiredKeys := []string{"inventory", "monitor", "strategy"}
+
+	for _, k := range requiredKeys {
+		if !config.IsSet(k) {
+			log.Fatalf("Missing %v definition", k)
+		}
+	}
 	log.Info("Initialising inventory")
 	inv := inventory.New(config.Sub("inventory"), log)
 
@@ -31,22 +39,32 @@ func New(config *viper.Viper, log *logrus.Entry) Manager {
 	log.Info("Initialising strategy")
 	str := strategy.New(config.Sub("strategy"), inv, monitor, log)
 
-	return Manager{Strategy: str, Inventory: inv, logger: log}
+	return Manager{Strategy: str, Inventory: inv, Logger: log, Config: config}
 }
 
 func (m *Manager) Run() error {
-	m.logger.Info("Executing strategy")
+	m.Logger.Info("Executing strategy")
 	rec, err := m.Strategy.Evaluate()
+	m.Config.SetDefault("scale_up", true)
+	m.Config.SetDefault("scale_down", true)
 	if err == nil {
 		switch *rec {
 		case strategy.SCALEUP:
-			m.logger.Warn("Scaling up")
-			err = m.Inventory.Increase()
+			if m.Config.GetBool("scale_up") {
+				m.Logger.Warn("Scaling up")
+				err = m.Inventory.Increase()
+			} else {
+				m.Logger.Warn("I would have scaled up")
+			}
 		case strategy.HOLD:
-			m.logger.Info("Doing nothing")
+			m.Logger.Info("Doing nothing")
 		case strategy.SCALEDOWN:
-			m.logger.Warn("Scaling down")
-			err = m.Inventory.Decrease()
+			if m.Config.GetBool("scale_down") {
+				m.Logger.Warn("Scaling down")
+				err = m.Inventory.Decrease()
+			} else {
+				m.Logger.Warn("I would have scaled down")
+			}
 		default:
 			err = errors.New("Unknown recommendation")
 
