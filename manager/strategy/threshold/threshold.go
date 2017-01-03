@@ -19,7 +19,7 @@ type ThresholdStrategy struct {
 	log       *logrus.Entry
 }
 
-func New(config *viper.Viper, inv inventory.Inventory, mon monitor.Monitor, log *logrus.Entry) *ThresholdStrategy {
+func New(config *viper.Viper, inv inventory.Inventory, mon monitor.Monitor, log *logrus.Entry) strategy.Strategy {
 	return &ThresholdStrategy{Config: config, Inventory: inv, Monitor: mon, log: log}
 }
 

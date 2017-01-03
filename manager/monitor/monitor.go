@@ -34,7 +34,7 @@ func Register(name string, factory factoryFunction) {
 
 func New(config *viper.Viper, log *logrus.Entry) Monitor {
 	// Find the correct monitor and return it
-	var inv Monitor
+	var mon Monitor
 	if config.IsSet("name") {
 		name := config.GetString("name")
 		newFunc, ok := monitors[name]
@@ -47,10 +47,10 @@ func New(config *viper.Viper, log *logrus.Entry) Monitor {
 			}
 			log.Fatalf("Invalid monitor name. Must be one of: %s", strings.Join(available, ", "))
 		}
-		inv = newFunc(config, log.WithField("monitor", name))
+		mon = newFunc(config, log.WithField("monitor", name))
 	} else {
 		// No monitor name provided in config
 		log.Fatalf("No monitor name provided")
 	}
-	return inv
+	return mon
 }
