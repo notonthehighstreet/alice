@@ -45,7 +45,7 @@ func initLogger() {
 	if loggingConf.IsSet("fluentd") {
 		fluentConf := loggingConf.Sub("fluentd")
 
-		fluentConf.SetDefault("host", "localhost")
+		fluentConf.SetDefault("host", "172.17.42.1")
 		fluentConf.SetDefault("port", 24224)
 		fluentConf.SetDefault("tag", "service.autoscaler")
 
