@@ -106,3 +106,12 @@ func TestAWS_Status(t *testing.T) {
 	asgScalingActivities.Activities = append(asgScalingActivities.Activities, failedActivity)
 	assert.Equal(t, inventory.FAILED, inv.Status())
 }
+
+func TestSettleDownTime(t *testing.T) {
+	setupTest()
+	inv.Config.Set("settle_down_period", "5m")
+	assert.Nil(t, inv.Increase())
+	assert.Equal(t, inventory.UPDATING, inv.Status())
+	assert.Error(t, inv.Decrease())
+	assert.Error(t, inv.Increase())
+}
