@@ -47,12 +47,17 @@ func (m *Manager) Run() error {
 	rec, err := m.Strategy.Evaluate()
 	m.Config.SetDefault("scale_up", true)
 	m.Config.SetDefault("scale_down", true)
+	invName, stratName, monName := m.Config.GetString("inventory.name"), m.Config.GetString("strategy.name"), m.Config.GetString("monitor.name")
 	if err == nil {
 		switch *rec {
 		case strategy.SCALEUP:
 			if m.Config.GetBool("scale_up") {
-				m.Logger.Warn("Scaling up")
 				err = m.Inventory.Increase()
+				if err != nil {
+					m.Logger.Infof("Can't scale up: %v", err.Error())
+				} else {
+					m.Logger.Warnf("Scaling up our %v inventory based on the %v strategy using information from %v", invName, stratName, monName)
+				}
 			} else {
 				m.Logger.Warn("I would have scaled up")
 			}
@@ -60,8 +65,12 @@ func (m *Manager) Run() error {
 			m.Logger.Info("Doing nothing")
 		case strategy.SCALEDOWN:
 			if m.Config.GetBool("scale_down") {
-				m.Logger.Warn("Scaling down")
 				err = m.Inventory.Decrease()
+				if err != nil {
+					m.Logger.Infof("Can't scale down: %v", err.Error())
+				} else {
+					m.Logger.Warnf("Scaling down our %v inventory based on the %v strategy using information from %v", invName, stratName, monName)
+				}
 			} else {
 				m.Logger.Warn("I would have scaled down")
 			}
