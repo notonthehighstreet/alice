@@ -96,6 +96,7 @@ func (a *AWSInventory) Status() inventory.Status {
 		}
 	}
 	if status == inventory.OK && time.Now().Before(a.lastModified.Add(a.Config.GetDuration("settle_down_period"))) {
+		a.log.Debugln("Still within settle down period")
 		status = inventory.UPDATING
 	}
 	return status
@@ -170,8 +171,6 @@ func (a *AWSInventory) Scale(amount int) error {
 	if e == nil {
 		a.log.Infof("Scaling %v by %v", a.GroupName(), amount)
 		a.lastModified = time.Now()
-	} else {
-		a.log.Errorln(e.Error())
 	}
 	return e
 }
