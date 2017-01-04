@@ -20,10 +20,10 @@ managers:
     strategy:
       name: threshold
       thresholds:
-        mesos.cluster.cpu.percent_used:
+        mesos.cluster.cpu_percent:
           min: 40
           max: 80
-        mesos.cluster.mem.percent_used:
+        mesos.cluster.mem_percent:
           min: 40
           max: 80
 

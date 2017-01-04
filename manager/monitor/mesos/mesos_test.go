@@ -48,10 +48,10 @@ func TestCalculatesStatistics(t *testing.T) {
 
 func TestMesosMaster_GetUpdatedMetrics(t *testing.T) {
 	setupTest()
-	metrics, err := monitor.GetUpdatedMetrics([]string{"mesos.cluster.cpu.percent_used"})
+	metrics, err := monitor.GetUpdatedMetrics([]string{"mesos.cluster.cpu_percent"})
 	assert.Nil(t, err)
 	assert.Equal(t, 25, (*metrics)[0].CurrentReading)
-	metrics, err = monitor.GetUpdatedMetrics([]string{"mesos.cluster.mem.percent_used"})
+	metrics, err = monitor.GetUpdatedMetrics([]string{"mesos.cluster.mem_percent"})
 	assert.Nil(t, err)
 	assert.Equal(t, 50, (*metrics)[0].CurrentReading)
 	metrics, err = monitor.GetUpdatedMetrics([]string{"invalid.metric.name"})
