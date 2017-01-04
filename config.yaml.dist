@@ -15,6 +15,7 @@ managers:
     inventory:
       name: aws
       region: eu-west-1
+      settle_down_period: 3m
 
     strategy:
       name: threshold

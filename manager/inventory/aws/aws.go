@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/autoscaling/autoscalingiface"
 	"github.com/notonthehighstreet/autoscaler/manager/inventory"
 	"github.com/spf13/viper"
+	"time"
 )
 
 type EC2MetadataAPI interface {
@@ -19,11 +20,12 @@ type EC2MetadataAPI interface {
 
 type AWSInventory struct {
 	log            *logrus.Entry
-	config         *viper.Viper
+	Config         *viper.Viper
 	AutoscalingSvc autoscalingiface.AutoScalingAPI
 	EC2metadataSvc EC2MetadataAPI
 	groupName      string
 	metadata       AWSMetadata
+	lastModified   time.Time
 }
 
 type AWSMetadata struct {
@@ -34,13 +36,14 @@ type AWSMetadata struct {
 
 func New(config *viper.Viper, log *logrus.Entry) inventory.Inventory {
 	config.SetDefault("region", "eu-west-1")
+	config.SetDefault("settle_down_period", "0s")
 	s, err := session.NewSession()
 	if err != nil {
 		log.Errorf("%s", err.Error())
 	}
 	region := config.GetString("region")
 	s.Config.Region = &region
-	a := AWSInventory{AutoscalingSvc: autoscaling.New(s), EC2metadataSvc: ec2metadata.New(s), log: log, config: config}
+	a := AWSInventory{AutoscalingSvc: autoscaling.New(s), EC2metadataSvc: ec2metadata.New(s), log: log, Config: config}
 	return &a
 }
 
@@ -91,6 +94,9 @@ func (a *AWSInventory) Status() inventory.Status {
 		} else {
 			params.NextToken = resp.NextToken
 		}
+	}
+	if status == inventory.OK && time.Now().Before(a.lastModified.Add(a.Config.GetDuration("settle_down_period"))) {
+		status = inventory.UPDATING
 	}
 	return status
 }
@@ -163,6 +169,7 @@ func (a *AWSInventory) Scale(amount int) error {
 	}
 	if e == nil {
 		a.log.Infof("Scaling %v by %v", a.GroupName(), amount)
+		a.lastModified = time.Now()
 	} else {
 		a.log.Errorln(e.Error())
 	}
