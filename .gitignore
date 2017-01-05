@@ -1,4 +1,4 @@
 autoscaler
 .idea/
 vendor/
-config.yaml
+config/config.yaml
