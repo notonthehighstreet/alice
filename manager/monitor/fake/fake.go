@@ -19,7 +19,7 @@ func (f *FakeMonitor) GetUpdatedMetrics(names []string) (*[]monitor.MetricUpdate
 	f.log.Infof("Setting all metrics to the fake reading %v", fakeReading)
 	for i, name := range names {
 		response[i].Name = name
-		response[i].CurrentReading = fakeReading
+		response[i].CurrentReading = float64(fakeReading)
 	}
 	return &response, nil
 }
