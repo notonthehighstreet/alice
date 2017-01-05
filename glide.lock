@@ -1,5 +1,5 @@
-hash: f8e2bcfe8441109e2af4afe6e2b8b58f433298533e8b4fa40e18a2c3338e8654
-updated: 2017-01-03T12:43:31.55723583Z
+hash: 0d9220d3dc23f08f7a132287edd0936574b2cdc5cde9b15f640b2df59b4c3456
+updated: 2017-01-04T12:02:12.204412646Z
 imports:
 - name: github.com/andygrunwald/megos
   version: 01814b52c25a0ea60ab4908f723cc9ee3bbfc495
@@ -31,6 +31,8 @@ imports:
   - service/autoscaling
   - service/autoscaling/autoscalingiface
   - service/sts
+- name: github.com/cenkalti/backoff
+  version: b02f2bbce11d7ea6b97f282ef1771b0fe2f65ef3
 - name: github.com/davecgh/go-spew
   version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
   subpackages:
@@ -114,6 +116,8 @@ imports:
   version: 38a6f61a768dc24552dad94611923841b53acc4f
   subpackages:
   - msgp
+- name: github.com/zorkian/go-datadog-api
+  version: a0a72fc5e4cae721b5144ba785f07f4edcf2cd47
 - name: golang.org/x/sys
   version: d75a52659825e75fff6158388dddc6a5b04f9ba5
   subpackages:

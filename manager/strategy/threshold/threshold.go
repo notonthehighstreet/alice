@@ -37,8 +37,8 @@ func (p *ThresholdStrategy) Evaluate() (*strategy.Recommendation, error) {
 	for _, metric := range *metricUpdates {
 		metricConfig := p.Config.Sub("thresholds." + metric.Name)
 		var metricRecommendation strategy.Recommendation
-		min := metricConfig.GetInt("min")
-		max := metricConfig.GetInt("max")
+		min := metricConfig.GetFloat64("min")
+		max := metricConfig.GetFloat64("max")
 		switch {
 		case metric.CurrentReading < min:
 			metricRecommendation = strategy.SCALEDOWN
