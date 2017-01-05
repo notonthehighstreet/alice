@@ -21,3 +21,4 @@ import:
 - package: github.com/evalphobia/logrus_fluent
   version: ^0.1.0
 - package: github.com/johntdyer/slackrus
+- package: github.com/zorkian/go-datadog-api

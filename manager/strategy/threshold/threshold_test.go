@@ -24,7 +24,7 @@ var thr *threshold.ThresholdStrategy
 func setupTest() {
 	metricNames = []string{"cpu_percent", "mem_percent", "disk_percent"}
 	for i, name := range metricNames {
-		metricUpdates = append(metricUpdates, monitor.MetricUpdate{Name: name, CurrentReading: i * 40}) // 0, 40, 80
+		metricUpdates = append(metricUpdates, monitor.MetricUpdate{Name: name, CurrentReading: float64(i * 40)}) // 0, 40, 80
 	}
 	mockMonitor.On("GetUpdatedMetrics").Return(&metricUpdates, nil)
 	config := viper.New()
