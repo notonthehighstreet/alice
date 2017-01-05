@@ -48,9 +48,9 @@ func (m *MesosMonitor) GetUpdatedMetrics(names []string) (*[]monitor.MetricUpdat
 		response[i].Name = name
 		switch name {
 		case "mesos.cluster.cpu_percent":
-			response[i].CurrentReading = int(stats.CPUPercent * 100)
+			response[i].CurrentReading = float64(stats.CPUPercent * 100)
 		case "mesos.cluster.mem_percent":
-			response[i].CurrentReading = int(stats.MemPercent * 100)
+			response[i].CurrentReading = float64(stats.MemPercent * 100)
 		default:
 			return &response, errors.New("Unknown mesos metric: " + name)
 		}

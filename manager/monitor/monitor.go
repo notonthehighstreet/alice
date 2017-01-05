@@ -12,7 +12,7 @@ type Monitor interface {
 
 type MetricUpdate struct {
 	Name           string
-	CurrentReading int
+	CurrentReading float64
 }
 
 // Create a hash for storing the names of registered monitors and their New() methods

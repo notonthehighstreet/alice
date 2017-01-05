@@ -9,8 +9,19 @@ managers:
   # Unique name of this manager
   example:
     monitor:
-      name: mesos  # Name of the plugin to load
+
+      # A mesos plugin example
+      name: mesos
       endpoint: http://mesos.service.consul:5050/state
+
+#      # A datadog plugin example
+#      name: datadog
+#      api_key:
+#      app_key:
+#      aggregation_method: avg
+#      time_period: 5m  # Most recent data point must be within this time
+#      tags:  # Metrics will be filtered by these tags
+#        envid: b
 
     inventory:
       name: aws
