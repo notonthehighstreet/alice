@@ -27,7 +27,7 @@ func main() {
 }
 
 func configure() {
-	conf.AddConfigPath(".")
+	conf.AddConfigPath("./config")
 	err := conf.ReadInConfig()
 	if err != nil {
 		logrus.Panicf("Fatal error config file: %s \n", err)
