@@ -1,10 +1,10 @@
 hash: 0d9220d3dc23f08f7a132287edd0936574b2cdc5cde9b15f640b2df59b4c3456
-updated: 2017-01-04T12:02:12.204412646Z
+updated: 2017-01-05T14:02:32.73275526Z
 imports:
 - name: github.com/andygrunwald/megos
   version: 01814b52c25a0ea60ab4908f723cc9ee3bbfc495
 - name: github.com/aws/aws-sdk-go
-  version: 36670f6ab1769ad77fa5f7e2c194398733503635
+  version: 63ce630574a5ec05ecd8e8de5cea16332a5a684d
   subpackages:
   - aws
   - aws/awserr
