@@ -28,7 +28,8 @@ func setupTest() {
 	mockMonitor.On("GetUpdatedMetrics").Return(&metricUpdates, nil)
 
 	config = viper.New()
-	rat = ratio.New(config, &mockInventory, &mockMonitor, log).(*ratio.RatioStrategy)
+	r, _ := ratio.New(config, &mockInventory, &mockMonitor, log)
+	rat = r.(*ratio.RatioStrategy)
 }
 func TestRatioStrategy_Evaluate(t *testing.T) {
 	setupTest()

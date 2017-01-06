@@ -32,8 +32,7 @@ func (f *FakeMonitor) generateFakeReading() int {
 	return int(output)
 }
 
-func New(config *viper.Viper, log *logrus.Entry) monitor.Monitor {
+func New(config *viper.Viper, log *logrus.Entry) (monitor.Monitor, error) {
 	config.SetDefault("increments", 10)
-	return &FakeMonitor{config: config, log: log, iteration: 0}
-
+	return &FakeMonitor{config: config, log: log, iteration: 0}, nil
 }

@@ -16,7 +16,11 @@ func main() {
 	managers := make(map[string]manager.Manager)
 
 	for name := range conf.GetStringMap("managers") {
-		managers[name] = manager.New(conf.Sub("managers."+name), log.WithField("manager", name))
+		mgr, err := manager.New(conf.Sub("managers."+name), log.WithField("manager", name))
+		if err != nil {
+			log.Fatalf("Error initializing manager: %s", err.Error())
+		}
+		managers[name] = mgr
 	}
 	interval := conf.GetDuration("interval")
 	for range time.NewTicker(interval).C {
@@ -63,7 +67,7 @@ func initLogger() *logrus.Entry {
 		slackConf.SetDefault("emoji", ":robot_face:")
 		slackConf.SetDefault("channel", "#slack-testing")
 		if !slackConf.IsSet("hook_url") {
-			logrus.Fatalln("Must provide hook_url for slack.")
+			logrus.Fatalln("Must provide hook_url for Slack.")
 		}
 		logrus.AddHook(&slackrus.SlackrusHook{
 			HookURL:        slackConf.GetString("hook_url"),

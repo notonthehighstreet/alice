@@ -1,6 +1,7 @@
 package inventory
 
 import (
+	"errors"
 	"github.com/Sirupsen/logrus"
 	"github.com/spf13/viper"
 	"strings"
@@ -10,7 +11,7 @@ type Inventory interface {
 	Total() (int, error)
 	Increase() error
 	Decrease() error
-	Status() Status
+	Status() (Status, error)
 }
 
 type Status int
@@ -23,7 +24,7 @@ const (
 
 // Create a hash for storing the names of registered inventories and their New() methods
 // eg {'foo': foo.New(), 'bar': bar.New(), 'baz': baz.New()}
-type factoryFunction func(config *viper.Viper, log *logrus.Entry) Inventory
+type factoryFunction func(config *viper.Viper, log *logrus.Entry) (Inventory, error)
 
 var inventories = make(map[string]factoryFunction)
 
@@ -38,25 +39,22 @@ func Register(name string, factory factoryFunction) {
 	inventories[name] = factory
 }
 
-func New(config *viper.Viper, log *logrus.Entry) Inventory {
+func New(config *viper.Viper, log *logrus.Entry) (Inventory, error) {
 	// Find the correct inventory and return it
-	var inv Inventory
-	if config.IsSet("name") {
-		name := config.GetString("name")
-		newFunc, ok := inventories[name]
-		if !ok {
-			// Inventory has not been registered.
-			// Make a list of all available inventories for logging.
-			available := make([]string, len(inventories))
-			for k := range inventories {
-				available = append(available, k)
-			}
-			log.Fatalf("Invalid inventory name. Must be one of: %s", strings.Join(available, ", "))
-		}
-		inv = newFunc(config, log.WithField("inventory", name))
-	} else {
-		// No inventory name provided in config
-		log.Fatalf("No inventory name provided")
+	if !config.IsSet("name") {
+		return nil, errors.New("No inventory name provided")
 	}
-	return inv
+	name := config.GetString("name")
+	newFunc, ok := inventories[name]
+	if !ok {
+		// Inventory has not been registered.
+		// Make a list of all available inventories for logging.
+		available := make([]string, len(inventories))
+		for k := range inventories {
+			available = append(available, k)
+		}
+		log.Fatalf("Invalid inventory name. Must be one of: %s", strings.Join(available, ", "))
+	}
+	return newFunc(config, log.WithField("inventory", name))
+
 }
