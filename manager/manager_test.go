@@ -1,19 +1,19 @@
 package manager_test
 
 import (
+	"github.com/Sirupsen/logrus"
+	"github.com/notonthehighstreet/autoscaler/manager"
 	"github.com/notonthehighstreet/autoscaler/manager/inventory"
 	"github.com/notonthehighstreet/autoscaler/manager/monitor"
-	"github.com/Sirupsen/logrus"
 	"github.com/notonthehighstreet/autoscaler/manager/strategy"
-	"testing"
 	"github.com/spf13/viper"
-	"github.com/notonthehighstreet/autoscaler/manager"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 var conf = viper.New()
 var log = logrus.WithFields(logrus.Fields{
-	"manager":  "Test",
+	"manager": "Test",
 })
 var inv inventory.MockInventory
 var mon monitor.MockMonitor
@@ -28,7 +28,7 @@ func init() {
 	strategy.Register("mock", strategy.MockNew)
 }
 
-func setupTest()  {
+func setupTest() {
 	conf.Set("monitor.name", "mock")
 	conf.Set("inventory.name", "mock")
 	conf.Set("strategy.name", "mock")
@@ -36,7 +36,6 @@ func setupTest()  {
 	man = manager.Manager{Strategy: &str, Inventory: &inv, Logger: log, Config: conf}
 
 }
-
 
 func TestManager_Run(t *testing.T) {
 	setupTest()

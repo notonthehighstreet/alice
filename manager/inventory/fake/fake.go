@@ -32,6 +32,6 @@ func (f *FakeInventory) Status() (inventory.Status, error) {
 	return inventory.OK, nil
 }
 
-func New(config *viper.Viper, log *logrus.Entry) inventory.Inventory {
-	return &FakeInventory{config: config, log: log, total: 10}
+func New(config *viper.Viper, log *logrus.Entry) (inventory.Inventory, error) {
+	return &FakeInventory{config: config, log: log, total: 10}, nil
 }

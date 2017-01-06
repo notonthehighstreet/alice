@@ -1,6 +1,7 @@
 package monitor
 
 import (
+	"errors"
 	"github.com/Sirupsen/logrus"
 	"github.com/spf13/viper"
 	"strings"
@@ -17,7 +18,7 @@ type MetricUpdate struct {
 
 // Create a hash for storing the names of registered monitors and their New() methods
 // eg {'foo': foo.New(), 'bar': bar.New(), 'baz': baz.New()}
-type factoryFunction func(config *viper.Viper, log *logrus.Entry) Monitor
+type factoryFunction func(config *viper.Viper, log *logrus.Entry) (Monitor, error)
 
 var monitors = make(map[string]factoryFunction)
 
@@ -32,25 +33,20 @@ func Register(name string, factory factoryFunction) {
 	monitors[name] = factory
 }
 
-func New(config *viper.Viper, log *logrus.Entry) Monitor {
+func New(config *viper.Viper, log *logrus.Entry) (Monitor, error) {
 	// Find the correct monitor and return it
-	var mon Monitor
-	if config.IsSet("name") {
-		name := config.GetString("name")
-		newFunc, ok := monitors[name]
-		if !ok {
-			// Monitor has not been registered.
-			// Make a list of all available monitors for logging.
-			available := make([]string, len(monitors))
-			for k := range monitors {
-				available = append(available, k)
-			}
-			log.Fatalf("Invalid monitor name. Must be one of: %s", strings.Join(available, ", "))
-		}
-		mon = newFunc(config, log.WithField("monitor", name))
-	} else {
-		// No monitor name provided in config
-		log.Fatalf("No monitor name provided")
+	if !config.IsSet("name") {
+		return nil, errors.New("No monitor name provided")
 	}
-	return mon
+
+	name := config.GetString("name")
+	newFunc, ok := monitors[name]
+	if !ok {
+		available := make([]string, len(monitors))
+		for m := range monitors {
+			available = append(available, m)
+		}
+		log.Fatalf("Invalid monitor name. Must be one of: %s", strings.Join(available, ", "))
+	}
+	return newFunc(config, log.WithField("monitor", name))
 }

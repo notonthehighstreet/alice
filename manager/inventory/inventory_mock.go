@@ -27,6 +27,6 @@ func (m *MockInventory) Status() (Status, error) {
 	return args.Get(0).(Status), nil
 }
 
-func MockNew(_ *viper.Viper, _ *logrus.Entry) Inventory {
-	return &MockInventory{}
+func MockNew(_ *viper.Viper, _ *logrus.Entry) (Inventory, error) {
+	return &MockInventory{}, nil
 }

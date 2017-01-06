@@ -34,8 +34,9 @@ func setupTest() {
 	config.Set("thresholds.mem_percent.max", 70)
 	config.Set("thresholds.disk_percent.min", 30)
 	config.Set("thresholds.disk_percent.max", 70)
-	thr = threshold.New(config, &mockInventory, &mockMonitor, log).(*threshold.ThresholdStrategy)
+	thr, _ = threshold.New(config, &mockInventory, &mockMonitor, log).(*threshold.ThresholdStrategy)
 }
+
 func TestThresholdStrategy_Evaluate(t *testing.T) {
 	setupTest()
 	recommendation, error := thr.Evaluate()

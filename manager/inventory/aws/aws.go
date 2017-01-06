@@ -34,9 +34,14 @@ type AWSMetadata struct {
 	instanceID   string
 }
 
+const (
+	defaultAWSRegion        = "eu-west-1"
+	defaultSettleDownPeriod = "0s"
+)
+
 func New(config *viper.Viper, log *logrus.Entry) (inventory.Inventory, error) {
-	config.SetDefault("region", "eu-west-1")
-	config.SetDefault("settle_down_period", "0s")
+	config.SetDefault("region", defaultAWSRegion)
+	config.SetDefault("settle_down_period", defaultSettleDownPeriod)
 	s, err := session.NewSession()
 	if err != nil {
 		return nil, err
@@ -78,7 +83,7 @@ func (a *AWSInventory) Status() (inventory.Status, error) {
 		if err != nil {
 			return status, err
 		}
-		a.log.Debugf("Checking %v pre-existing scaling activites", len(resp.Activities))
+		a.log.Debugf("Checking %d pre-existing scaling activites", len(resp.Activities))
 		for _, activity := range resp.Activities {
 			switch *activity.StatusCode {
 			case autoscaling.ScalingActivityStatusCodeSuccessful:
