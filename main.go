@@ -63,7 +63,7 @@ func initLogger() {
 		slackConf.SetDefault("emoji", ":robot_face:")
 		slackConf.SetDefault("channel", "#slack-testing")
 		if !slackConf.IsSet("hook_url") {
-			logrus.Fatalln("Must provide hook_url for slack.")
+			logrus.Fatalln("Must provide hook_url for Slack.")
 		}
 		logrus.AddHook(&slackrus.SlackrusHook{
 			HookURL:        slackConf.GetString("hook_url"),

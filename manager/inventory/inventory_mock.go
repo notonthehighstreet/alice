@@ -22,9 +22,9 @@ func (m *MockInventory) Decrease() error {
 	args := m.Mock.Called()
 	return args.Error(0)
 }
-func (m *MockInventory) Status() Status {
+func (m *MockInventory) Status() (Status, error) {
 	args := m.Mock.Called()
-	return args.Get(0).(Status)
+	return args.Get(0).(Status), nil
 }
 
 func MockNew(_ *viper.Viper, _ *logrus.Entry) Inventory {

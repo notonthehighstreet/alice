@@ -10,7 +10,7 @@ type Inventory interface {
 	Total() (int, error)
 	Increase() error
 	Decrease() error
-	Status() Status
+	Status() (Status, error)
 }
 
 type Status int

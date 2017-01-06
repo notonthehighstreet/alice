@@ -28,8 +28,8 @@ func (f *FakeInventory) Decrease() error {
 	return nil
 }
 
-func (f *FakeInventory) Status() inventory.Status {
-	return inventory.OK
+func (f *FakeInventory) Status() (inventory.Status, error) {
+	return inventory.OK, nil
 }
 
 func New(config *viper.Viper, log *logrus.Entry) inventory.Inventory {
