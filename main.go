@@ -16,7 +16,11 @@ func main() {
 	managers := make(map[string]manager.Manager)
 
 	for name := range conf.GetStringMap("managers") {
-		managers[name] = manager.New(conf.Sub("managers."+name), logrus.WithField("manager", name))
+		mgr, err := manager.New(conf.Sub("managers."+name), logrus.WithField("manager", name))
+		if err != nil {
+			logrus.Fatalf("Error initializing manager: %s", err.Error())
+		}
+		managers[name] = mgr
 	}
 	interval := conf.GetDuration("interval")
 	for range time.NewTicker(interval).C {
