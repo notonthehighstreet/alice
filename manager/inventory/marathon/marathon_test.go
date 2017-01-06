@@ -2,11 +2,11 @@ package marathon_test
 
 import (
 	"github.com/Sirupsen/logrus"
+	marathonclient "github.com/gambol99/go-marathon"
+	"github.com/notonthehighstreet/autoscaler/manager/inventory/marathon"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"testing"
-	"github.com/notonthehighstreet/autoscaler/manager/inventory/marathon"
-	marathonclient "github.com/gambol99/go-marathon"
 
 	"github.com/notonthehighstreet/autoscaler/manager/inventory"
 )
@@ -22,6 +22,7 @@ func setupTest() {
 	log.Logger.Level = logrus.DebugLevel
 	config := viper.New()
 	config.Set("app", "notonthehighstreet-admin")
+	config.Set("url", "http://foo.com:8080")
 	inv = marathon.New(config, log).(*marathon.MarathonInventory)
 	inv.Client = &mockClient
 	instances := 1
