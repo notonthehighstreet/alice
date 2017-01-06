@@ -22,3 +22,5 @@ import:
   version: ^0.1.0
 - package: github.com/johntdyer/slackrus
 - package: github.com/zorkian/go-datadog-api
+- package: github.com/gambol99/go-marathon
+  version: ^0.6.0
