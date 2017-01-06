@@ -9,7 +9,6 @@ managers:
   # Unique name of this manager
   example:
     monitor:
-
       # A mesos plugin example
       name: mesos
       endpoint: http://mesos.service.consul:5050/state
@@ -24,11 +23,20 @@ managers:
 #        envid: b
 
     inventory:
+      # An EC2 autoscaling group plugin example
       name: aws
       region: eu-west-1
       settle_down_period: 3m
 
+#      # A marathon application plugin example
+#      name: marathon
+#      settle_down_period: 3m
+#      url: http://marathon.example.com:8080
+#      app: my_app_id  # Application ID in marathon
+
+
     strategy:
+      # A threshold strategy plugin example
       name: threshold
       thresholds:
         mesos.cluster.cpu_percent:
@@ -37,6 +45,13 @@ managers:
         mesos.cluster.mem_percent:
           min: 40
           max: 80
+
+       # A ratio strategy plugin example
+#      name: ratio
+#      ratios:
+#        website.active_users:
+#          metric: 50
+#          inventory: 1
 
 # Uncomment for a manager with a fake monitor and inventory
 #  test:
