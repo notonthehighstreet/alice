@@ -1,7 +1,6 @@
 package manager
 
 import (
-	"errors"
 	"github.com/Sirupsen/logrus"
 	"github.com/notonthehighstreet/autoscaler/manager/inventory"
 	"github.com/notonthehighstreet/autoscaler/manager/inventory/aws"
@@ -14,6 +13,7 @@ import (
 	"github.com/notonthehighstreet/autoscaler/manager/strategy"
 	"github.com/notonthehighstreet/autoscaler/manager/strategy/ratio"
 	"github.com/notonthehighstreet/autoscaler/manager/strategy/threshold"
+	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 )
 
@@ -24,24 +24,33 @@ type Manager struct {
 	Config    *viper.Viper
 }
 
-func New(config *viper.Viper, log *logrus.Entry) Manager {
+func New(config *viper.Viper, log *logrus.Entry) (Manager, error) {
 	requiredKeys := []string{"inventory", "monitor", "strategy"}
-
 	for _, k := range requiredKeys {
 		if !config.IsSet(k) {
 			log.Fatalf("Missing %v definition", k)
 		}
 	}
+
 	log.Info("Initialising inventory")
-	inv := inventory.New(config.Sub("inventory"), log)
+	inv, err := inventory.New(config.Sub("inventory"), log)
+	if err != nil {
+		return Manager{}, errors.Wrap(err, "Error initialization inventory")
+	}
 
 	log.Info("Initialising monitor")
-	monitor := monitor.New(config.Sub("monitor"), log)
+	monitor, err := monitor.New(config.Sub("monitor"), log)
+	if err != nil {
+		return Manager{}, errors.Wrap(err, "Error initialization monitor")
+	}
 
 	log.Info("Initialising strategy")
-	str := strategy.New(config.Sub("strategy"), inv, monitor, log)
+	str, err := strategy.New(config.Sub("strategy"), inv, monitor, log)
+	if err != nil {
+		return Manager{}, errors.Wrap(err, "Error initializing strategy")
+	}
 
-	return Manager{Strategy: str, Inventory: inv, Logger: log, Config: config}
+	return Manager{Strategy: str, Inventory: inv, Logger: log, Config: config}, nil
 }
 
 func (m *Manager) Run() error {
@@ -56,9 +65,9 @@ func (m *Manager) Run() error {
 			if m.Config.GetBool("scale_up") {
 				err = m.Inventory.Increase()
 				if err != nil {
-					m.Logger.Infof("Can't scale up: %v", err.Error())
+					m.Logger.Infof("Can't scale up: %s", err.Error())
 				} else {
-					m.Logger.Warnf("Scaling up our %v inventory based on the %v strategy using information from %v", invName, stratName, monName)
+					m.Logger.Warnf("Scaling up our %s inventory based on the %s strategy using information from %s", invName, stratName, monName)
 				}
 			} else {
 				m.Logger.Warn("I would have scaled up")
@@ -69,9 +78,9 @@ func (m *Manager) Run() error {
 			if m.Config.GetBool("scale_down") {
 				err = m.Inventory.Decrease()
 				if err != nil {
-					m.Logger.Infof("Can't scale down: %v", err.Error())
+					m.Logger.Infof("Can't scale down: %s", err.Error())
 				} else {
-					m.Logger.Warnf("Scaling down our %v inventory based on the %v strategy using information from %v", invName, stratName, monName)
+					m.Logger.Warnf("Scaling down our %s inventory based on the %s strategy using information from %v", invName, stratName, monName)
 				}
 			} else {
 				m.Logger.Warn("I would have scaled down")

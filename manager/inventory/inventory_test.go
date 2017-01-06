@@ -18,6 +18,6 @@ func setupTest() {
 
 func TestNew(t *testing.T) {
 	setupTest()
-	i := inventory.New(config, &log)
+	i, _ := inventory.New(config, &log)
 	assert.IsType(t, &inventory.MockInventory{}, i)
 }

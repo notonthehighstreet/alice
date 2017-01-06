@@ -34,25 +34,36 @@ type AWSMetadata struct {
 	instanceID   string
 }
 
-func New(config *viper.Viper, log *logrus.Entry) inventory.Inventory {
-	config.SetDefault("region", "eu-west-1")
-	config.SetDefault("settle_down_period", "0s")
+const (
+	defaultAWSRegion        = "eu-west-1"
+	defaultSettleDownPeriod = "0s"
+)
+
+func New(config *viper.Viper, log *logrus.Entry) (inventory.Inventory, error) {
+	config.SetDefault("region", defaultAWSRegion)
+	config.SetDefault("settle_down_period", defaultSettleDownPeriod)
 	s, err := session.NewSession()
 	if err != nil {
-		log.Errorf("%s", err.Error())
+		return nil, err
 	}
 	region := config.GetString("region")
 	s.Config.Region = &region
-	a := AWSInventory{AutoscalingSvc: autoscaling.New(s), EC2metadataSvc: ec2metadata.New(s), log: log, Config: config}
-	return &a
+	inv := AWSInventory{
+		AutoscalingSvc: autoscaling.New(s),
+		EC2metadataSvc: ec2metadata.New(s),
+		log:            log,
+		Config:         config,
+	}
+	return &inv, nil
 }
 
 func (a *AWSInventory) Total() (int, error) {
 	name := a.GroupName()
-	params := &autoscaling.DescribeAutoScalingGroupsInput{AutoScalingGroupNames: []*string{&name}}
+	params := &autoscaling.DescribeAutoScalingGroupsInput{
+		AutoScalingGroupNames: []*string{&name},
+	}
 	group := a.describeAutoScalingGroups(params)
 	return len(group.Instances), nil
-
 }
 
 func (a *AWSInventory) Increase() error {
@@ -63,16 +74,16 @@ func (a *AWSInventory) Decrease() error {
 	return a.Scale(-1)
 }
 
-func (a *AWSInventory) Status() inventory.Status {
+func (a *AWSInventory) Status() (inventory.Status, error) {
 	params := &autoscaling.DescribeScalingActivitiesInput{AutoScalingGroupName: aws.String(a.GroupName())}
 	status := inventory.OK
 	done := false
 	for !done {
 		resp, err := a.AutoscalingSvc.DescribeScalingActivities(params)
 		if err != nil {
-			a.log.Fatalf("%v", err)
+			return status, err
 		}
-		a.log.Debugf("Checking %v pre-existing scaling activites", len(resp.Activities))
+		a.log.Debugf("Checking %d pre-existing scaling activites", len(resp.Activities))
 		for _, activity := range resp.Activities {
 			switch *activity.StatusCode {
 			case autoscaling.ScalingActivityStatusCodeSuccessful:
@@ -83,7 +94,7 @@ func (a *AWSInventory) Status() inventory.Status {
 				continue
 			case autoscaling.ScalingActivityStatusCodeFailed:
 				a.log.Debugln("Found a failed activity")
-				return inventory.FAILED
+				return inventory.FAILED, nil
 			default:
 				a.log.Debugln("Found an in-progress activity")
 				status = inventory.UPDATING
@@ -99,7 +110,7 @@ func (a *AWSInventory) Status() inventory.Status {
 		a.log.Debugln("Still within settle down period")
 		status = inventory.UPDATING
 	}
-	return status
+	return status, nil
 }
 
 func (a *AWSInventory) describeAutoScalingGroups(params *autoscaling.DescribeAutoScalingGroupsInput) *autoscaling.Group {
@@ -142,12 +153,16 @@ func (a *AWSInventory) GroupName() string {
 
 func (a *AWSInventory) Scale(amount int) error {
 	// Check inventory status before trying to scale anything
-	var e error
-	switch a.Status() {
+	status, err := a.Status()
+	if err != nil {
+		return err
+	}
+
+	switch status {
 	case inventory.UPDATING:
-		e = errors.New("Won't scale servers while changes are in progress")
+		err = errors.New("Won't scale servers while changes are in progress")
 	case inventory.FAILED:
-		e = errors.New("Won't scale servers while something seems to be in a failed state")
+		err = errors.New("Won't scale servers while something seems to be in a failed state")
 	case inventory.OK:
 		group := a.describeAutoScalingGroups(&autoscaling.DescribeAutoScalingGroupsInput{})
 		currentCapacity := *group.DesiredCapacity
@@ -156,7 +171,7 @@ func (a *AWSInventory) Scale(amount int) error {
 		a.log.Infof("New desired capacity will be: %d", newCapacity)
 
 		if newCapacity < *group.MinSize {
-			e = errors.New("Attempt to scale below minimum capacity denied")
+			err = errors.New("Attempt to scale below minimum capacity denied")
 			break
 		}
 		scalingParams := &autoscaling.SetDesiredCapacityInput{
@@ -164,15 +179,15 @@ func (a *AWSInventory) Scale(amount int) error {
 			DesiredCapacity:      aws.Int64(newCapacity),
 			HonorCooldown:        aws.Bool(false),
 		}
-		_, e = a.AutoscalingSvc.SetDesiredCapacity(scalingParams)
+		_, err = a.AutoscalingSvc.SetDesiredCapacity(scalingParams)
 	default:
-		e = errors.New("Unknown status")
+		err = errors.New("Unknown status")
 	}
-	if e == nil {
+	if err == nil {
 		a.log.Infof("Scaling %v by %v", a.GroupName(), amount)
 		a.lastModified = time.Now()
 	}
-	return e
+	return err
 }
 
 func (a *AWSInventory) RefreshMetadata() {

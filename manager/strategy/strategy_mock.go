@@ -17,6 +17,6 @@ func (m *MockStrategy) Evaluate() (*Recommendation, error) {
 	return args.Get(0).(*Recommendation), args.Error(1)
 }
 
-func MockNew(_ *viper.Viper, _ inventory.Inventory, _ monitor.Monitor, _ *logrus.Entry) Strategy {
-	return &MockStrategy{}
+func MockNew(_ *viper.Viper, _ inventory.Inventory, _ monitor.Monitor, _ *logrus.Entry) (Strategy, error) {
+	return &MockStrategy{}, nil
 }
