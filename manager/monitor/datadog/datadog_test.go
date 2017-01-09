@@ -26,7 +26,8 @@ func setupTest() {
 	config.Set("time_period", "5m")
 	log.Logger.Level = logrus.DebugLevel
 	mockDatadogClient = datadog.MockDatadogClient{}
-	monitor = datadog.New(config, log).(*datadog.DatadogMonitor)
+	m, _ := datadog.New(config, log)
+	monitor = m.(*datadog.DatadogMonitor)
 	monitor.Client = &mockDatadogClient
 }
 
