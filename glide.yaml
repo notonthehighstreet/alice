@@ -24,3 +24,4 @@ import:
 - package: github.com/zorkian/go-datadog-api
 - package: github.com/gambol99/go-marathon
   version: ^0.6.0
+- package: github.com/pkg/errors

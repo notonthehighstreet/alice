@@ -18,8 +18,8 @@ type RatioStrategy struct {
 	log       *logrus.Entry
 }
 
-func New(config *viper.Viper, inv inventory.Inventory, mon monitor.Monitor, log *logrus.Entry) strategy.Strategy {
-	return &RatioStrategy{Config: config, Inventory: inv, Monitor: mon, log: log}
+func New(config *viper.Viper, inv inventory.Inventory, mon monitor.Monitor, log *logrus.Entry) (strategy.Strategy, error) {
+	return &RatioStrategy{Config: config, Inventory: inv, Monitor: mon, log: log}, nil
 }
 
 func (r *RatioStrategy) Evaluate() (*strategy.Recommendation, error) {
@@ -40,8 +40,8 @@ func (r *RatioStrategy) Evaluate() (*strategy.Recommendation, error) {
 	for _, metric := range *metricUpdates {
 		metricConfig := r.Config.Sub("ratios." + metric.Name)
 		var metricRecommendation strategy.Recommendation
-		if !(metricConfig.IsSet("metric") && metricConfig.IsSet("inventory")) {
-			r.log.Fatalln("Strategy requires 'metric' and 'inventory' numbers for each ratio")
+		if !metricConfig.IsSet("metric") || !metricConfig.IsSet("inventory") {
+			return nil, errors.New("Strategy requires 'metric' and 'inventory' numbers for each ratio")
 		}
 
 		m := float64(metricConfig.GetInt("metric"))

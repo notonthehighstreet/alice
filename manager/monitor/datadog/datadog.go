@@ -48,7 +48,7 @@ func (d *DatadogMonitor) GetUpdatedMetrics(names []string) (*[]monitor.MetricUpd
 			return nil, err
 		}
 		if len(result) != 1 || len(result[0].Points) < 1 {
-			return nil, errors.New(fmt.Sprintf("No data for %v between %v and %v", metric, from, to))
+			return nil, fmt.Errorf("No data for %v between %v and %v", metric, from, to)
 		}
 		response[index].Name = metric
 		response[index].CurrentReading = result[0].Points[len(result[0].Points)-1][1]
@@ -69,7 +69,6 @@ func (d *DatadogMonitor) BuildQuery(metric string) (string, error) {
 		tags = d.BuildTagsString(d.config.GetStringMapString("tags"))
 	}
 	return agg + ":" + metric + tags, nil
-
 }
 
 func (d *DatadogMonitor) BuildTagsString(tags map[string]string) string {
@@ -90,7 +89,7 @@ func stringInSlice(a string, list []string) bool {
 	return false
 }
 
-func New(config *viper.Viper, log *logrus.Entry) monitor.Monitor {
+func New(config *viper.Viper, log *logrus.Entry) (monitor.Monitor, error) {
 	requiredConfig := []string{"api_key", "app_key", "time_period"}
 	for _, item := range requiredConfig {
 		if !config.IsSet(item) {
@@ -98,5 +97,5 @@ func New(config *viper.Viper, log *logrus.Entry) monitor.Monitor {
 		}
 	}
 	client := datadog.NewClient(config.GetString("api_key"), config.GetString("app_key"))
-	return &DatadogMonitor{log: log, config: config, Client: client}
+	return &DatadogMonitor{log: log, config: config, Client: client}, nil
 }

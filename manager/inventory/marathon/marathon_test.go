@@ -23,7 +23,8 @@ func setupTest() {
 	config := viper.New()
 	config.Set("app", "notonthehighstreet-admin")
 	config.Set("url", "http://foo.com:8080")
-	inv = marathon.New(config, log).(*marathon.MarathonInventory)
+	i, _ := marathon.New(config, log)
+	inv = i.(*marathon.MarathonInventory)
 	inv.Client = &mockClient
 	instances := 1
 	app := marathonclient.Application{Instances: &instances}
@@ -60,7 +61,8 @@ func TestMarathon_Decrease(t *testing.T) {
 
 func TestMarathon_Status(t *testing.T) {
 	setupTest()
-	assert.Equal(t, inventory.OK, inv.Status())
+	s, _ := inv.Status()
+	assert.Equal(t, inventory.OK, s)
 }
 
 func TestSettleDownTime(t *testing.T) {
@@ -69,7 +71,8 @@ func TestSettleDownTime(t *testing.T) {
 	mockClient.On("ScaleApplicationInstances").Return(deployment, nil)
 	inv.Config.Set("settle_down_period", "5m")
 	assert.Nil(t, inv.Increase())
-	assert.Equal(t, inventory.UPDATING, inv.Status())
+	s, _ := inv.Status()
+	assert.Equal(t, inventory.UPDATING, s)
 	assert.Error(t, inv.Decrease())
 	assert.Error(t, inv.Increase())
 }

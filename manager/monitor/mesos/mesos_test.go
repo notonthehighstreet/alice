@@ -35,13 +35,17 @@ func setupTest() {
 	}
 	mockMesosClient.On("GetStateFromLeader").Return(state, nil)
 	mockMesosClient.On("DetermineLeader").Return(megos.Pid{}, nil)
-	monitor = mesos.New(viper.New(), log).(*mesos.MesosMonitor)
+	mon, _ := mesos.New(viper.New(), log)
+	monitor = mon.(*mesos.MesosMonitor)
 	monitor.Client = &mockMesosClient
 }
 
 func TestCalculatesStatistics(t *testing.T) {
 	setupTest()
-	stats := monitor.Stats()
+	stats, err := monitor.Stats()
+	if err != nil {
+		t.Error(err)
+	}
 	assert.Equal(t, 0.25, stats.CPUPercent)
 	assert.Equal(t, 0.5, stats.MemPercent)
 }
@@ -54,6 +58,6 @@ func TestMesosMaster_GetUpdatedMetrics(t *testing.T) {
 	metrics, err = monitor.GetUpdatedMetrics([]string{"mesos.cluster.mem_percent"})
 	assert.Nil(t, err)
 	assert.Equal(t, float64(50), (*metrics)[0].CurrentReading)
-	metrics, err = monitor.GetUpdatedMetrics([]string{"invalid.metric.name"})
+	_, err = monitor.GetUpdatedMetrics([]string{"invalid.metric.name"})
 	assert.NotNil(t, err)
 }

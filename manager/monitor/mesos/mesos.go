@@ -1,10 +1,10 @@
 package mesos
 
 import (
-	"errors"
 	"github.com/Sirupsen/logrus"
 	"github.com/andygrunwald/megos"
 	"github.com/notonthehighstreet/autoscaler/manager/monitor"
+	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 	"net/url"
 )
@@ -30,20 +30,25 @@ type MesosClient interface {
 	DetermineLeader() (*megos.Pid, error)
 }
 
+const defaultMesosMaster = "http://mesos.service.consul:5050/state"
+
 // NewMesosMaster initialises any new Mesos master. We will use this master to determine the leader of the cluster.
-func New(config *viper.Viper, log *logrus.Entry) monitor.Monitor {
-	config.SetDefault("endpoint", "http://mesos.service.consul:5050/state")
+func New(config *viper.Viper, log *logrus.Entry) (monitor.Monitor, error) {
+	config.SetDefault("endpoint", defaultMesosMaster)
 	u, err := url.Parse(config.GetString("endpoint"))
 	if err != nil {
-		log.Fatalf("Can't create mesos monitor: %v", err)
+		return nil, errors.Wrap(err, "Can't create mesos monitor")
 	}
 	mesos := megos.NewClient([]*url.URL{u}, nil)
-	return &MesosMonitor{log: log, Client: mesos, config: config}
+	return &MesosMonitor{log: log, Client: mesos, config: config}, nil
 }
 
 func (m *MesosMonitor) GetUpdatedMetrics(names []string) (*[]monitor.MetricUpdate, error) {
 	response := make([]monitor.MetricUpdate, len(names))
-	stats := m.Stats()
+	stats, err := m.Stats()
+	if err != nil {
+		return nil, err
+	}
 	for i, name := range names {
 		response[i].Name = name
 		switch name {
@@ -52,17 +57,17 @@ func (m *MesosMonitor) GetUpdatedMetrics(names []string) (*[]monitor.MetricUpdat
 		case "mesos.cluster.mem_percent":
 			response[i].CurrentReading = float64(stats.MemPercent * 100)
 		default:
-			return &response, errors.New("Unknown mesos metric: " + name)
+			return &response, errors.Errorf("Unknown mesos metric: %s", name)
 		}
 	}
 	return &response, nil
 }
 
-func (m *MesosMonitor) Stats() *MesosStats {
+func (m *MesosMonitor) Stats() (*MesosStats, error) {
 	m.Client.DetermineLeader()
 	state, err := m.Client.GetStateFromLeader()
 	if err != nil {
-		m.log.Fatalf("Error getting mesos stats: %v", err)
+		return nil, errors.Wrap(err, "Error getting Mesos stats")
 	}
 
 	stats := &MesosStats{}
@@ -76,5 +81,5 @@ func (m *MesosMonitor) Stats() *MesosStats {
 	stats.CPUPercent = stats.CPUUsed / stats.CPUAvailable
 	stats.MemPercent = stats.MemUsed / stats.MemAvailable
 
-	return stats
+	return stats, nil
 }
