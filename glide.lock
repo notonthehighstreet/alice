@@ -40,6 +40,8 @@ imports:
   version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
   subpackages:
   - spew
+- name: github.com/donovanhide/eventsource
+  version: fd1de70867126402be23c306e1ce32828455d85b
 - name: github.com/evalphobia/logrus_fluent
   version: 86bb83d119886b935a52194cad48fd01815b0125
 - name: github.com/fluent/fluent-logger-golang
@@ -52,6 +54,8 @@ imports:
 - name: github.com/gin-gonic/gin
   version: e2212d40c62a98b388a5eb48ecbdcf88534688ba
   repo: https://github.com/gin-gonic/gin
+- name: github.com/gambol99/go-marathon
+  version: 9ab64d9f0259e8800911d92ebcd4d5b981917919
 - name: github.com/go-ini/ini
   version: 6f66b0e091edb3c7b380f7c4f0f884274d550b67
 - name: github.com/go-martini/martini
@@ -70,6 +74,10 @@ imports:
   version: 2402d76f3d41f928c7902a765dfc872356dd3aad
   subpackages:
   - proto
+- name: github.com/google/go-querystring
+  version: 9235644dd9e52eeae6fa48efd539fdc351a0af53
+  subpackages:
+  - query
 - name: github.com/hashicorp/hcl
   version: 80e628d796135357b3d2e33a985c666b9f35eee1
 - name: github.com/heirko/go-contrib

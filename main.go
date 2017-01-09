@@ -12,7 +12,7 @@ import (
 
 func main() {
 	configure()
-	initLogger()
+	log := initLogger()
 	managers := make(map[string]manager.Manager)
 
 	for name := range conf.GetStringMap("managers") {
@@ -41,7 +41,7 @@ func configure() {
 	conf.SetDefault("logging.level", "info")
 }
 
-func initLogger() {
+func initLogger() *logrus.Entry {
 	loggingConf := conf.Sub("logging")
 	var c = logrusHelper.UnmarshalConfiguration(loggingConf) // Unmarshal configuration from Viper
 	logrusHelper.SetConfig(logrus.StandardLogger(), c)       // apply it to logrus default instance
@@ -78,4 +78,11 @@ func initLogger() {
 		})
 
 	}
+	fields := logrus.Fields{}
+	if loggingConf.IsSet("custom_fields") {
+		for k, v := range loggingConf.GetStringMapString("custom_fields") {
+			fields[k] = v
+		}
+	}
+	return logrus.StandardLogger().WithFields(fields)
 }
