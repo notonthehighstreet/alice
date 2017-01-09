@@ -18,6 +18,6 @@ func setupTest() {
 
 func TestNew(t *testing.T) {
 	setupTest()
-	i := monitor.New(config, &log)
+	i, _ := monitor.New(config, &log)
 	assert.IsType(t, &monitor.MockMonitor{}, i)
 }

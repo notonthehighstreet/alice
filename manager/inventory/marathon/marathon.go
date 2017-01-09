@@ -1,12 +1,13 @@
 package marathon
 
 import (
-	"github.com/spf13/viper"
-	"time"
-	"github.com/notonthehighstreet/autoscaler/manager/inventory"
+	"errors"
+	"fmt"
 	"github.com/Sirupsen/logrus"
 	"github.com/gambol99/go-marathon"
-	"errors"
+	"github.com/notonthehighstreet/autoscaler/manager/inventory"
+	"github.com/spf13/viper"
+	"time"
 )
 
 type MarathonClient interface {
@@ -15,17 +16,17 @@ type MarathonClient interface {
 }
 
 type MarathonInventory struct {
-	log            *logrus.Entry
-	Client 	       MarathonClient
-	Config         *viper.Viper
-	lastModified   time.Time
+	log          *logrus.Entry
+	Client       MarathonClient
+	Config       *viper.Viper
+	lastModified time.Time
 }
 
-func New(config *viper.Viper, log *logrus.Entry) inventory.Inventory {
+func New(config *viper.Viper, log *logrus.Entry) (inventory.Inventory, error) {
 	requiredConfig := []string{"app", "url"}
 	for _, item := range requiredConfig {
 		if !config.IsSet(item) {
-			log.Fatalf("Missing config: %v", item)
+			return nil, errors.New(fmt.Sprintf("Missing config: %v", item))
 		}
 	}
 	config.SetDefault("settle_down_period", "0s")
@@ -33,10 +34,10 @@ func New(config *viper.Viper, log *logrus.Entry) inventory.Inventory {
 	marathonConfig.URL = config.GetString("url")
 	client, err := marathon.NewClient(marathonConfig)
 	if err != nil {
-	    log.Fatalf("Failed to create a client for marathon, error: %s", err)
+		return nil, err
 	}
 	a := MarathonInventory{log: log, Config: config, Client: client}
-	return &a
+	return &a, nil
 }
 
 func (m *MarathonInventory) Total() (int, error) {
@@ -66,14 +67,18 @@ func (m *MarathonInventory) Scale(amount int) error {
 	if err != nil {
 		return err
 	}
-	switch m.Status() {
+	status, err := m.Status()
+	if err != nil {
+		return err
+	}
+	switch status {
 	case inventory.UPDATING:
 		e = errors.New("Won't scale application while another action is in progress")
 	case inventory.FAILED:
 		e = errors.New("Won't scale application while something seems to be in a failed state")
 	case inventory.OK:
-		if _, err := m.Client.ScaleApplicationInstances(app.ID, currentTotal + amount, false); err != nil {
-	    		return err
+		if _, err := m.Client.ScaleApplicationInstances(app.ID, currentTotal+amount, false); err != nil {
+			return err
 		}
 	default:
 		e = errors.New("Unknown status")
@@ -85,19 +90,19 @@ func (m *MarathonInventory) Scale(amount int) error {
 	return e
 }
 
-func (m *MarathonInventory) Status() inventory.Status {
+func (m *MarathonInventory) Status() (inventory.Status, error) {
 	app, err := m.GetApplication()
 	if err != nil {
-		return inventory.FAILED
+		return inventory.FAILED, err
 	}
 	if len(app.DeploymentIDs()) > 0 {
-		return inventory.UPDATING
+		return inventory.UPDATING, nil
 	}
 	if time.Now().Before(m.lastModified.Add(m.Config.GetDuration("settle_down_period"))) {
 		m.log.Debugln("Still within settle down period")
-		return inventory.UPDATING
+		return inventory.UPDATING, nil
 	}
-	return inventory.OK
+	return inventory.OK, nil
 }
 
 func (m *MarathonInventory) GetApplication() (*marathon.Application, error) {
