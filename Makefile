@@ -18,7 +18,7 @@ localbuild:
 		chmod 755 autoscaler"
 
 dockerbuild: localbuild
-	docker build -t ${HUB}/${NAME}:latest .
+	docker build -t ${HUB}/${NAME}:${VERSION} .
 
 dockerpush: dockerbuild
-	docker push ${HUB}/${NAME}:latest
+	docker push ${HUB}/${NAME}:${VERSION}
