@@ -46,18 +46,17 @@ func TestCalculatesStatistics(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	assert.Equal(t, 0.25, stats.CPUPercent)
-	assert.Equal(t, 0.5, stats.MemPercent)
+	assert.Equal(t, float64(25), stats.Metrics["mesos.cluster.cpu_percent"])
+	assert.Equal(t, float64(50), stats.Metrics["mesos.cluster.mem_percent"])
+
+	assert.Equal(t, float64(50), stats.Metrics["mesos.slave.cpu_percent.max"])
+	assert.Equal(t, float64(34.375), stats.Metrics["mesos.slave.mem_percent.min"])
+
+	assert.Equal(t, float64(2.1), stats.Metrics["mesos.slave.mem_free.max"])
 }
 
 func TestMesosMaster_GetUpdatedMetrics(t *testing.T) {
 	setupTest()
-	metrics, err := monitor.GetUpdatedMetrics([]string{"mesos.cluster.cpu_percent"})
-	assert.Nil(t, err)
-	assert.Equal(t, float64(25), (*metrics)[0].CurrentReading)
-	metrics, err = monitor.GetUpdatedMetrics([]string{"mesos.cluster.mem_percent"})
-	assert.Nil(t, err)
-	assert.Equal(t, float64(50), (*metrics)[0].CurrentReading)
-	_, err = monitor.GetUpdatedMetrics([]string{"invalid.metric.name"})
+	_, err := monitor.GetUpdatedMetrics([]string{"invalid.metric.name"})
 	assert.NotNil(t, err)
 }
