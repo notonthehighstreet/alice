@@ -16,13 +16,24 @@ type MesosMonitor struct {
 }
 
 type MesosStats struct {
-	CPUUsed      float64
-	CPUAvailable float64
-	CPUPercent   float64
+	Metrics map[string]float64
+}
 
-	MemUsed      float64
-	MemAvailable float64
-	MemPercent   float64
+func (s *MesosStats) updateMinMax(name string, number float64) {
+	if min, ok := s.Metrics[name+".min"]; ok {
+		if min > number {
+			s.Metrics[name+".min"] = number
+		}
+	} else {
+		s.Metrics[name+".min"] = number
+	}
+	if max, ok := s.Metrics[name+".max"]; ok {
+		if max < number {
+			s.Metrics[name+".max"] = number
+		}
+	} else {
+		s.Metrics[name+".max"] = number
+	}
 }
 
 type MesosClient interface {
@@ -51,12 +62,9 @@ func (m *MesosMonitor) GetUpdatedMetrics(names []string) (*[]monitor.MetricUpdat
 	}
 	for i, name := range names {
 		response[i].Name = name
-		switch name {
-		case "mesos.cluster.cpu_percent":
-			response[i].CurrentReading = float64(stats.CPUPercent * 100)
-		case "mesos.cluster.mem_percent":
-			response[i].CurrentReading = float64(stats.MemPercent * 100)
-		default:
+		if val, ok := stats.Metrics[name]; ok {
+			response[i].CurrentReading = val
+		} else {
 			return &response, errors.Errorf("Unknown mesos metric: %s", name)
 		}
 	}
@@ -71,15 +79,23 @@ func (m *MesosMonitor) Stats() (*MesosStats, error) {
 	}
 
 	stats := &MesosStats{}
+	stats.Metrics = make(map[string]float64)
 
 	for _, slave := range state.Slaves {
-		stats.CPUAvailable += slave.UnreservedResources.CPUs
-		stats.MemAvailable += slave.UnreservedResources.Mem
-		stats.CPUUsed += slave.UsedResources.CPUs
-		stats.MemUsed += slave.UsedResources.Mem
+		stats.Metrics["mesos.cluster.cpu_total"] += slave.UnreservedResources.CPUs
+		stats.Metrics["mesos.cluster.mem_total"] += slave.UnreservedResources.Mem
+		stats.Metrics["mesos.cluster.cpu_used"] += slave.UsedResources.CPUs
+		stats.Metrics["mesos.cluster.mem_used"] += slave.UsedResources.Mem
+
+		stats.updateMinMax("mesos.slave.cpu_free", slave.UnreservedResources.CPUs-slave.UsedResources.CPUs)
+		stats.updateMinMax("mesos.slave.cpu_used", slave.UsedResources.CPUs)
+		stats.updateMinMax("mesos.slave.cpu_percent", (slave.UsedResources.CPUs*10)*100/(slave.UnreservedResources.CPUs*10))
+		stats.updateMinMax("mesos.slave.mem_free", slave.UnreservedResources.Mem-slave.UsedResources.Mem)
+		stats.updateMinMax("mesos.slave.mem_used", slave.UsedResources.Mem)
+		stats.updateMinMax("mesos.slave.mem_percent", (slave.UsedResources.Mem*10)*100/(slave.UnreservedResources.Mem*10))
 	}
-	stats.CPUPercent = stats.CPUUsed / stats.CPUAvailable
-	stats.MemPercent = stats.MemUsed / stats.MemAvailable
+	stats.Metrics["mesos.cluster.cpu_percent"] = (stats.Metrics["mesos.cluster.cpu_used"] * 10) * 100 / (stats.Metrics["mesos.cluster.cpu_total"] * 10)
+	stats.Metrics["mesos.cluster.mem_percent"] = (stats.Metrics["mesos.cluster.mem_used"] * 10) * 100 / (stats.Metrics["mesos.cluster.mem_total"] * 10)
 
 	return stats, nil
 }
