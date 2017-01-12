@@ -70,7 +70,7 @@ func (m *Manager) Run() error {
 					m.Logger.Warnf("Scaling up our %s inventory based on the %s strategy using information from %s", invName, stratName, monName)
 				}
 			} else {
-				m.Logger.Warn("I would have scaled up our %s inventory based on the %s strategy using information from %s but am running in advisory mode", invName, stratName, monName)
+				m.Logger.Warnf("I would have scaled up our %s inventory based on the %s strategy using information from %s but am running in advisory mode", invName, stratName, monName)
 			}
 		case strategy.HOLD:
 			m.Logger.Info("Doing nothing")
@@ -83,7 +83,7 @@ func (m *Manager) Run() error {
 					m.Logger.Warnf("Scaling down our %s inventory based on the %s strategy using information from %s", invName, stratName, monName)
 				}
 			} else {
-				m.Logger.Warn("I would have scaled down our %s inventory based on the %s strategy using information from %s but am running in advisory mode", invName, stratName, monName)
+				m.Logger.Warnf("I would have scaled down our %s inventory based on the %s strategy using information from %s but am running in advisory mode", invName, stratName, monName)
 			}
 		default:
 			err = errors.New("Unknown recommendation")
