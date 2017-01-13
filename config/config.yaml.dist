@@ -28,11 +28,13 @@ managers:
       region: eu-west-1
       settle_down_period: 3m
 
-#      # A marathon application plugin example
+      # A marathon application plugin example
 #      name: marathon
 #      settle_down_period: 3m
 #      url: http://marathon.example.com:8080
 #      app: my_app_id  # Application ID in marathon
+#      minimum_instances: 1
+#      maximum_instances: 10
 
 
     strategy:
