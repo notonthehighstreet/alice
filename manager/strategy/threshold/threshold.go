@@ -35,17 +35,22 @@ func (p *ThresholdStrategy) Evaluate() (*strategy.Recommendation, error) {
 		return nil, err
 	}
 	for _, metric := range *metricUpdates {
-		metricConfig := p.Config.Sub("thresholds." + metric.Name)
 		var metricRecommendation strategy.Recommendation
+		var invert = 1
+
+		metricConfig := p.Config.Sub("thresholds." + metric.Name)
+		if metricConfig.GetBool("invert_scaling") {
+			invert = -1
+		}
 		min := metricConfig.GetFloat64("min")
 		max := metricConfig.GetFloat64("max")
 		switch {
 		case metric.CurrentReading < min:
-			metricRecommendation = strategy.SCALEDOWN
+			metricRecommendation = strategy.Recommendation(int(strategy.SCALEDOWN) * invert)
 		case metric.CurrentReading >= min && metric.CurrentReading <= max:
 			metricRecommendation = strategy.HOLD
 		case metric.CurrentReading > max:
-			metricRecommendation = strategy.SCALEUP
+			metricRecommendation = strategy.Recommendation(int(strategy.SCALEUP) * invert)
 		default:
 			return &finalRecommendation, errors.New("Strategy: Something went wrong")
 		}
