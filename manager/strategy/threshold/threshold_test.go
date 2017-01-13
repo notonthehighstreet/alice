@@ -24,7 +24,7 @@ var thr *threshold.ThresholdStrategy
 func setupTest() {
 	metricNames = []string{"cpu_percent", "mem_percent", "disk_percent"}
 	for i, name := range metricNames {
-		metricUpdates = append(metricUpdates, monitor.MetricUpdate{Name: name, CurrentReading: float64(i * 40)}) // 0, 40, 80
+		metricUpdates = append(metricUpdates, monitor.MetricUpdate{Name: name, CurrentReading: float64(i*40 + 10)}) // 10, 50, 90
 	}
 	mockMonitor.On("GetUpdatedMetrics").Return(&metricUpdates, nil)
 	config := viper.New()
@@ -52,6 +52,29 @@ func TestThresholdStrategy_Evaluate(t *testing.T) {
 
 	thr.Config.Set("thresholds.mem_percent.min", 100)
 	thr.Config.Set("thresholds.mem_percent.max", 100)
+	recommendation, error = thr.Evaluate()
+	assert.Nil(t, error)
+	assert.Equal(t, *recommendation, strategy.SCALEDOWN) // because of all
+}
+
+func TestThresholdStrategy_Evaluate_Inverted(t *testing.T) {
+	setupTest()
+	thr.Config.Set("thresholds.cpu_percent.invert_scaling", true)
+	thr.Config.Set("thresholds.mem_percent.invert_scaling", true)
+	thr.Config.Set("thresholds.disk_percent.invert_scaling", true)
+
+	recommendation, error := thr.Evaluate()
+	assert.Nil(t, error)
+	assert.Equal(t, *recommendation, strategy.SCALEUP) // because of cpu_percent
+
+	thr.Config.Set("thresholds.cpu_percent.min", 0)
+	thr.Config.Set("thresholds.cpu_percent.max", 0)
+	recommendation, error = thr.Evaluate()
+	assert.Nil(t, error)
+	assert.Equal(t, *recommendation, strategy.HOLD) // because of mem_percent
+
+	thr.Config.Set("thresholds.mem_percent.min", 0)
+	thr.Config.Set("thresholds.mem_percent.max", 0)
 	recommendation, error = thr.Evaluate()
 	assert.Nil(t, error)
 	assert.Equal(t, *recommendation, strategy.SCALEDOWN) // because of all
