@@ -47,6 +47,10 @@ managers:
         mesos.cluster.mem_percent:
           min: 40
           max: 80
+        mesos.slave.mem_free.max:
+          min: 4
+          max: 8
+          invert_scaling: true  # Scale up if we fall below the minimum
 
        # A ratio strategy plugin example
 #      name: ratio
