@@ -67,6 +67,12 @@ func (m *MarathonInventory) Scale(amount int) error {
 	if err != nil {
 		return err
 	}
+	if m.Config.IsSet("minimum_instances") && currentTotal+amount < m.Config.GetInt("minimum_instances") {
+		return errors.New("Won't scale below the minimum instances specified in config")
+	}
+	if m.Config.IsSet("maximum_instances") && currentTotal+amount > m.Config.GetInt("maximum_instances") {
+		return errors.New("Won't scale above the maximum instances specified in config")
+	}
 	status, err := m.Status()
 	if err != nil {
 		return err

@@ -49,14 +49,20 @@ func TestMarathon_Increase(t *testing.T) {
 	setupTest()
 	deployment := marathonclient.DeploymentID{}
 	mockClient.On("ScaleApplicationInstances").Return(deployment, nil)
-	assert.Nil(t, inv.Increase())
+	assert.NoError(t, inv.Increase())
+
+	inv.Config.Set("maximum_instances", 1)
+	assert.Error(t, inv.Increase())
 }
 
 func TestMarathon_Decrease(t *testing.T) {
 	setupTest()
 	deployment := marathonclient.DeploymentID{}
 	mockClient.On("ScaleApplicationInstances").Return(deployment, nil)
-	assert.Nil(t, inv.Decrease())
+	assert.NoError(t, inv.Decrease())
+
+	inv.Config.Set("minimum_instances", 1)
+	assert.Error(t, inv.Decrease())
 }
 
 func TestMarathon_Status(t *testing.T) {
