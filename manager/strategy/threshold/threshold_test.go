@@ -11,71 +11,104 @@ import (
 	"testing"
 )
 
+var config *viper.Viper
 var log = logrus.WithFields(logrus.Fields{
 	"manager":  "Mock",
 	"strategy": "ThresholdStrategy",
 })
 var mockInventory inventory.MockInventory
 var mockMonitor monitor.MockMonitor
-var metricNames []string
-var metricUpdates []monitor.MetricUpdate
+var mockResponse []monitor.MetricUpdate
 var thr *threshold.ThresholdStrategy
 
 func setupTest() {
-	metricNames = []string{"cpu_percent", "mem_percent", "disk_percent"}
-	for i, name := range metricNames {
-		metricUpdates = append(metricUpdates, monitor.MetricUpdate{Name: name, CurrentReading: float64(i*40 + 10)}) // 10, 50, 90
-	}
-	mockMonitor.On("GetUpdatedMetrics").Return(&metricUpdates, nil)
-	config := viper.New()
-	config.Set("thresholds.cpu_percent.min", 30)
-	config.Set("thresholds.cpu_percent.max", 70)
-	config.Set("thresholds.mem_percent.min", 30)
-	config.Set("thresholds.mem_percent.max", 70)
-	config.Set("thresholds.disk_percent.min", 30)
-	config.Set("thresholds.disk_percent.max", 70)
+	mockMonitor.On("GetUpdatedMetrics").Return(&mockResponse, nil)
+	config = viper.New()
+
 	t, _ := threshold.New(config, &mockInventory, &mockMonitor, log)
 	thr = t.(*threshold.ThresholdStrategy)
 }
 
-func TestThresholdStrategy_Evaluate(t *testing.T) {
+func TestThresholdStrategy_EvaluateSingleMetric(t *testing.T) {
 	setupTest()
-	recommendation, error := thr.Evaluate()
-	assert.Nil(t, error)
-	assert.Equal(t, *recommendation, strategy.SCALEUP) // because of disk_percent
 
-	thr.Config.Set("thresholds.disk_percent.min", 100)
-	thr.Config.Set("thresholds.disk_percent.max", 100)
-	recommendation, error = thr.Evaluate()
-	assert.Nil(t, error)
-	assert.Equal(t, *recommendation, strategy.HOLD) // because of mem_percent
+	config.Set("thresholds.metric.name.min", 5)
+	config.Set("thresholds.metric.name.max", 15)
 
-	thr.Config.Set("thresholds.mem_percent.min", 100)
-	thr.Config.Set("thresholds.mem_percent.max", 100)
-	recommendation, error = thr.Evaluate()
-	assert.Nil(t, error)
-	assert.Equal(t, *recommendation, strategy.SCALEDOWN) // because of all
+	mockResponse = []monitor.MetricUpdate{{Name: "metric.name", CurrentReading: 0}}
+	recommendation, _ := thr.Evaluate()
+	assert.Equal(t, *recommendation, strategy.SCALEDOWN)
+
+	mockResponse = []monitor.MetricUpdate{{Name: "metric.name", CurrentReading: 10}}
+	recommendation, _ = thr.Evaluate()
+	assert.Equal(t, *recommendation, strategy.HOLD)
+
+	mockResponse = []monitor.MetricUpdate{{Name: "metric.name", CurrentReading: 20}}
+	recommendation, _ = thr.Evaluate()
+	assert.Equal(t, *recommendation, strategy.SCALEUP)
 }
 
-func TestThresholdStrategy_Evaluate_Inverted(t *testing.T) {
+func TestThresholdStrategy_EvaluateSingleMetricInverted(t *testing.T) {
 	setupTest()
-	thr.Config.Set("thresholds.cpu_percent.invert_scaling", true)
-	thr.Config.Set("thresholds.mem_percent.invert_scaling", true)
-	thr.Config.Set("thresholds.disk_percent.invert_scaling", true)
 
-	recommendation, error := thr.Evaluate()
-	assert.Nil(t, error)
-	assert.Equal(t, *recommendation, strategy.SCALEUP) // because of cpu_percent
+	config.Set("thresholds.metric.name.min", 5)
+	config.Set("thresholds.metric.name.max", 15)
+	config.Set("thresholds.metric.name.invert_scaling", true)
 
-	thr.Config.Set("thresholds.cpu_percent.min", 0)
-	thr.Config.Set("thresholds.cpu_percent.max", 0)
-	recommendation, error = thr.Evaluate()
-	assert.Nil(t, error)
-	assert.Equal(t, *recommendation, strategy.HOLD) // because of mem_percent
+	mockResponse = []monitor.MetricUpdate{{Name: "metric.name", CurrentReading: 0}}
+	recommendation, _ := thr.Evaluate()
+	assert.Equal(t, *recommendation, strategy.SCALEUP)
 
-	thr.Config.Set("thresholds.mem_percent.min", 0)
-	thr.Config.Set("thresholds.mem_percent.max", 0)
-	recommendation, error = thr.Evaluate()
-	assert.Nil(t, error)
-	assert.Equal(t, *recommendation, strategy.SCALEDOWN) // because of all
+	mockResponse = []monitor.MetricUpdate{{Name: "metric.name", CurrentReading: 10}}
+	recommendation, _ = thr.Evaluate()
+	assert.Equal(t, *recommendation, strategy.HOLD)
+
+	mockResponse = []monitor.MetricUpdate{{Name: "metric.name", CurrentReading: 20}}
+	recommendation, _ = thr.Evaluate()
+	assert.Equal(t, *recommendation, strategy.SCALEDOWN)
+}
+
+func TestThresholdStrategy_EvaluateMultipleMetrics(t *testing.T) {
+	setupTest()
+
+	config.Set("thresholds.metric.one.min", 5)
+	config.Set("thresholds.metric.one.max", 15)
+	config.Set("thresholds.metric.two.min", 5)
+	config.Set("thresholds.metric.two.max", 15)
+
+	mockResponse = []monitor.MetricUpdate{
+		{Name: "metric.one", CurrentReading: 0},
+		{Name: "metric.two", CurrentReading: 0},
+	}
+	recommendation, _ := thr.Evaluate()
+	assert.Equal(t, *recommendation, strategy.SCALEDOWN)
+
+	mockResponse = []monitor.MetricUpdate{
+		{Name: "metric.one", CurrentReading: 0},
+		{Name: "metric.two", CurrentReading: 10},
+	}
+	recommendation, _ = thr.Evaluate()
+	assert.Equal(t, *recommendation, strategy.HOLD)
+
+	mockResponse = []monitor.MetricUpdate{
+		{Name: "metric.one", CurrentReading: 0},
+		{Name: "metric.two", CurrentReading: 20},
+	}
+	recommendation, _ = thr.Evaluate()
+	assert.Equal(t, *recommendation, strategy.SCALEUP)
+
+	mockResponse = []monitor.MetricUpdate{
+		{Name: "metric.one", CurrentReading: 10},
+		{Name: "metric.two", CurrentReading: 0},
+	}
+	recommendation, _ = thr.Evaluate()
+	assert.Equal(t, *recommendation, strategy.HOLD)
+
+	mockResponse = []monitor.MetricUpdate{
+		{Name: "metric.one", CurrentReading: 20},
+		{Name: "metric.two", CurrentReading: 0},
+	}
+	recommendation, _ = thr.Evaluate()
+	assert.Equal(t, *recommendation, strategy.SCALEUP)
+
 }
