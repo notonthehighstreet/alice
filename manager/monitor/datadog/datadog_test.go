@@ -31,32 +31,9 @@ func setupTest() {
 	monitor.Client = &mockDatadogClient
 }
 
-func TestDatadogMonitor_BuildQuery(t *testing.T) {
-	setupTest()
-	metric := "foo.bar.baz"
-	query, err := monitor.BuildQuery(metric)
-	assert.NoError(t, err)
-	assert.Equal(t, "avg:foo.bar.baz{*}", query)
-
-	setupTest()
-	config.Set("tags.envid", "c")
-	config.Set("aggregation_method", "max")
-	query, err = monitor.BuildQuery(metric)
-	assert.NoError(t, err)
-	assert.Equal(t, "max:foo.bar.baz{envid:c}", query)
-}
-
-func TestDatadogMonitor_BuildTagsString(t *testing.T) {
-	setupTest()
-	tags := map[string]string{
-		"foo":       "bar",
-		"something": "something",
-	}
-	assert.Equal(t, "{foo:bar,something:something}", monitor.BuildTagsString(tags))
-}
-
 func TestDatadog_GetUpdatedMetrics(t *testing.T) {
 	setupTest()
+	config.Set("metrics.foo.bar.baz.query", "avg:foo.bar.baz{*}")
 	metrics := []string{"foo.bar.baz"}
 	mockResponse := []datadogclient.Series{
 		{Points: []datadogclient.DataPoint{
@@ -68,8 +45,8 @@ func TestDatadog_GetUpdatedMetrics(t *testing.T) {
 	mockDatadogClient.On("Validate").Return(true, nil)
 	mockDatadogClient.On("QueryMetrics").Return(mockResponse, nil)
 	vp, err := monitor.GetUpdatedMetrics(metrics)
-	val := *vp
 	assert.NoError(t, err)
+	val := *vp
 	assert.Equal(t, 1, len(val))
 	assert.Equal(t, 0.5, val[0].CurrentReading)
 }
