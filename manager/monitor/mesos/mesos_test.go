@@ -48,6 +48,8 @@ func TestCalculatesStatistics(t *testing.T) {
 	}
 	assert.Equal(t, float64(25), stats.Metrics["mesos.cluster.cpu_percent"])
 	assert.Equal(t, float64(50), stats.Metrics["mesos.cluster.mem_percent"])
+	assert.Equal(t, float64(3.3), stats.Metrics["mesos.cluster.mem_free"])
+	assert.Equal(t, float64(3.3), stats.Metrics["mesos.cluster.mem_used"])
 
 	assert.Equal(t, float64(50), stats.Metrics["mesos.slave.cpu_percent.max"])
 	assert.Equal(t, float64(34.375), stats.Metrics["mesos.slave.mem_percent.min"])
