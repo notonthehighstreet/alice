@@ -17,10 +17,10 @@ managers:
 #      name: datadog
 #      api_key:
 #      app_key:
-#      aggregation_method: avg
 #      time_period: 5m  # Most recent data point must be within this time
-#      tags:  # Metrics will be filtered by these tags
-#        envid: b
+#      metrics:  # Metrics will be filtered by these tags
+#        my.metric.name:
+#          query: avg:a.datadog.query{*}
 
     inventory:
       # An EC2 autoscaling group plugin example
