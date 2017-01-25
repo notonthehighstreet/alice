@@ -1,7 +1,7 @@
 package threshold
 
 import (
-	"errors"
+	"fmt"
 	"github.com/Sirupsen/logrus"
 	"github.com/notonthehighstreet/autoscaler/manager/inventory"
 	"github.com/notonthehighstreet/autoscaler/manager/monitor"
@@ -38,23 +38,27 @@ func (p *ThresholdStrategy) Evaluate() (*strategy.Recommendation, error) {
 		var metricRecommendation strategy.Recommendation
 		var invert = 1
 
+		if !p.Config.IsSet("thresholds." + metric.Name) {
+			return nil, fmt.Errorf("No threshold configuration for %s", metric.Name)
+		}
 		metricConfig := p.Config.Sub("thresholds." + metric.Name)
+
 		if metricConfig.GetBool("invert_scaling") {
 			invert = -1
 		}
 		min := metricConfig.GetFloat64("min")
 		max := metricConfig.GetFloat64("max")
 		switch {
-		case metric.CurrentReading < min:
+		case metric.CurrentReading < min && metricConfig.IsSet("min"):
 			metricRecommendation = strategy.Recommendation(int(strategy.SCALEDOWN) * invert)
-		case metric.CurrentReading >= min && metric.CurrentReading <= max:
-			metricRecommendation = strategy.HOLD
-		case metric.CurrentReading > max:
+		case metric.CurrentReading > max && metricConfig.IsSet("max"):
 			metricRecommendation = strategy.Recommendation(int(strategy.SCALEUP) * invert)
+		case !metricConfig.IsSet("max") && !metricConfig.IsSet("min"):
+			return nil, fmt.Errorf("Threshold strategy needs either 'min' or 'max' for %s", metric.Name)
 		default:
-			return &finalRecommendation, errors.New("Strategy: Something went wrong")
+			metricRecommendation = strategy.HOLD
 		}
-		p.log.Debugf("Metric: %v value: %v min: %v max: %v. Suggests %v.", metric.Name, metric.CurrentReading, min, max, metricRecommendation)
+		p.log.Debugf("Metric: %v value: %v. Suggests %v.", metric.Name, metric.CurrentReading, metricRecommendation)
 		if finalRecommendation < metricRecommendation { // Worst case scenario wins
 			finalRecommendation = metricRecommendation
 		}
