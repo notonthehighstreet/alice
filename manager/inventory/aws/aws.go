@@ -87,7 +87,6 @@ func (a *AWSInventory) Status() (inventory.Status, error) {
 		for _, activity := range resp.Activities {
 			switch *activity.StatusCode {
 			case autoscaling.ScalingActivityStatusCodeSuccessful:
-				a.log.Debugln("Ignoring a successful activity")
 				continue
 			case autoscaling.ScalingActivityStatusCodeCancelled:
 				a.log.Debugln("Ignoring a cancelled activity")
