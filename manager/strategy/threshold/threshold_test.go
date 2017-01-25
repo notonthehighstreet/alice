@@ -46,6 +46,24 @@ func TestThresholdStrategy_EvaluateSingleMetric(t *testing.T) {
 	mockResponse = []monitor.MetricUpdate{{Name: "metric.name", CurrentReading: 20}}
 	recommendation, _ = thr.Evaluate()
 	assert.Equal(t, *recommendation, strategy.SCALEUP)
+
+	setupTest()
+	config.Set("thresholds.metric.name.foo", "invalid")
+	mockResponse = []monitor.MetricUpdate{{Name: "metric.name", CurrentReading: 0}}
+	_, err := thr.Evaluate()
+	assert.Error(t, err)
+
+	config.Set("thresholds.metric.name.min", 5)
+	recommendation, _ = thr.Evaluate()
+	assert.Equal(t, *recommendation, strategy.SCALEDOWN)
+
+	mockResponse = []monitor.MetricUpdate{{Name: "metric.name", CurrentReading: 10}}
+	recommendation, _ = thr.Evaluate()
+	assert.Equal(t, *recommendation, strategy.HOLD)
+
+	config.Set("thresholds.metric.name.max", 6)
+	recommendation, _ = thr.Evaluate()
+	assert.Equal(t, *recommendation, strategy.SCALEUP)
 }
 
 func TestThresholdStrategy_EvaluateSingleMetricInverted(t *testing.T) {
