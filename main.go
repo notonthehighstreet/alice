@@ -22,6 +22,9 @@ func main() {
 		}
 		managers[name] = mgr
 	}
+	for _, manager := range managers {
+		manager.Run()
+	}
 	interval := conf.GetDuration("interval")
 	for range time.NewTicker(interval).C {
 		for _, manager := range managers {
