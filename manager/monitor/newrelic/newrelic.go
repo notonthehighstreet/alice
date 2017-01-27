@@ -83,6 +83,7 @@ func (c *NewRelicClient) Get(URL, apiKey string) (NewRelicResponse, error) {
 	if err != nil {
 		return nrResponse, err
 	}
+	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
