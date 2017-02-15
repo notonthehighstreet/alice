@@ -1,9 +1,9 @@
-package manager_test
+package autoscaler_test
 
 import (
 	"github.com/Sirupsen/logrus"
+	"github.com/notonthehighstreet/autoscaler"
 	"github.com/notonthehighstreet/autoscaler/inventory"
-	"github.com/notonthehighstreet/autoscaler/manager"
 	"github.com/notonthehighstreet/autoscaler/monitor"
 	"github.com/notonthehighstreet/autoscaler/strategy"
 	"github.com/spf13/viper"
@@ -19,7 +19,7 @@ var inv inventory.MockInventory
 var mon monitor.MockMonitor
 var str strategy.MockStrategy
 var recommendation strategy.Recommendation
-var man manager.Manager
+var man autoscaler.Manager
 
 func init() {
 	// Register plugins at load time
@@ -33,7 +33,7 @@ func setupTest() {
 	conf.Set("inventory.name", "mock")
 	conf.Set("strategy.name", "mock")
 	recommendation = strategy.HOLD
-	man = manager.Manager{Strategy: &str, Inventory: &inv, Logger: log, Config: conf}
+	man = autoscaler.Manager{Strategy: &str, Inventory: &inv, Logger: log, Config: conf}
 
 }
 

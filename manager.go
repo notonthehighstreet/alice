@@ -1,4 +1,4 @@
-package manager
+package autoscaler
 
 import (
 	"github.com/Sirupsen/logrus"
