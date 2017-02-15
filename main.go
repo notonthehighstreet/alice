@@ -8,7 +8,6 @@ import (
 	"github.com/notonthehighstreet/autoscaler/manager"
 	"github.com/notonthehighstreet/autoscaler/manager/inventory"
 	"github.com/notonthehighstreet/autoscaler/manager/inventory/aws"
-	"github.com/notonthehighstreet/autoscaler/manager/inventory/fake"
 	"github.com/notonthehighstreet/autoscaler/manager/inventory/marathon"
 	"github.com/notonthehighstreet/autoscaler/manager/monitor"
 	"github.com/notonthehighstreet/autoscaler/manager/strategy"
@@ -22,7 +21,7 @@ import (
 func init() {
 	// Register plugins at load time
 	inventory.Register("aws", aws.New)
-	inventory.Register("fake", fake_inventory.New)
+	inventory.Register("fake", inventory.NewFake)
 	inventory.Register("marathon", marathon.New)
 	monitor.Register("fake", monitor.NewFake)
 	monitor.Register("mesos", monitor.NewMesos)
