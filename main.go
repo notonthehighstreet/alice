@@ -16,6 +16,7 @@ import (
 	"github.com/notonthehighstreet/autoscaler/manager/strategy/ratio"
 	"github.com/notonthehighstreet/autoscaler/manager/strategy/threshold"
 	conf "github.com/spf13/viper"
+	"sync"
 	"time"
 )
 
@@ -41,23 +42,25 @@ func init() {
 
 func main() {
 	log := initLogger()
-	managers := make(map[string]manager.Manager)
-
+	var managers []manager.Manager
 	for name := range conf.GetStringMap("managers") {
-		mgr, err := manager.New(conf.Sub("managers."+name), log.WithField("manager", name))
-		if err != nil {
+		if mgr, err := manager.New(conf.Sub("managers."+name), log.WithField("manager", name)); err != nil {
 			log.Fatalf("Error initializing manager: %s", err.Error())
+		} else {
+			managers = append(managers, mgr)
 		}
-		managers[name] = mgr
 	}
-	for _, manager := range managers {
-		manager.Run()
-	}
-	interval := conf.GetDuration("interval")
-	for range time.NewTicker(interval).C {
-		for _, manager := range managers {
-			manager.Run()
+	for {
+		var wg sync.WaitGroup
+		wg.Add(len(managers))
+		for _, man := range managers {
+			go func(m autoscaler.Manager) {
+				defer wg.Done()
+				m.Run()
+			}(man)
 		}
+		wg.Wait()
+		time.Sleep(conf.GetDuration("interval"))
 	}
 }
 
