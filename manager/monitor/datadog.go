@@ -1,10 +1,9 @@
-package datadog
+package monitor
 
 import (
 	"errors"
 	"fmt"
 	"github.com/Sirupsen/logrus"
-	"github.com/notonthehighstreet/autoscaler/manager/monitor"
 	"github.com/spf13/viper"
 	"github.com/zorkian/go-datadog-api"
 	"strconv"
@@ -16,7 +15,7 @@ type DatadogMonitorClient interface {
 	QueryMetrics(int64, int64, string) ([]datadog.Series, error)
 }
 
-type DatadogMonitor struct {
+type Datadog struct {
 	log               *logrus.Entry
 	Client            DatadogMonitorClient
 	config            *viper.Viper
@@ -24,8 +23,8 @@ type DatadogMonitor struct {
 	haveCheckedApiKey bool
 }
 
-func (d *DatadogMonitor) GetUpdatedMetrics(names []string) (*[]monitor.MetricUpdate, error) {
-	response := make([]monitor.MetricUpdate, len(names))
+func (d *Datadog) GetUpdatedMetrics(names []string) (*[]MetricUpdate, error) {
+	response := make([]MetricUpdate, len(names))
 	if !d.haveCheckedApiKey {
 		v, err := d.Client.Validate() // validate API key
 		if err != nil {
@@ -63,7 +62,7 @@ func (d *DatadogMonitor) GetUpdatedMetrics(names []string) (*[]monitor.MetricUpd
 	return &response, nil
 }
 
-func New(config *viper.Viper, log *logrus.Entry) (monitor.Monitor, error) {
+func NewDatadog(config *viper.Viper, log *logrus.Entry) (Monitor, error) {
 	requiredConfig := []string{"api_key", "app_key", "time_period"}
 	for _, item := range requiredConfig {
 		if !config.IsSet(item) {
@@ -71,5 +70,5 @@ func New(config *viper.Viper, log *logrus.Entry) (monitor.Monitor, error) {
 		}
 	}
 	client := datadog.NewClient(config.GetString("api_key"), config.GetString("app_key"))
-	return &DatadogMonitor{log: log, config: config, Client: client}, nil
+	return &Datadog{log: log, config: config, Client: client}, nil
 }

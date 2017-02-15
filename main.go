@@ -11,7 +11,6 @@ import (
 	"github.com/notonthehighstreet/autoscaler/manager/inventory/fake"
 	"github.com/notonthehighstreet/autoscaler/manager/inventory/marathon"
 	"github.com/notonthehighstreet/autoscaler/manager/monitor"
-	"github.com/notonthehighstreet/autoscaler/manager/monitor/datadog"
 	"github.com/notonthehighstreet/autoscaler/manager/strategy"
 	"github.com/notonthehighstreet/autoscaler/manager/strategy/ratio"
 	"github.com/notonthehighstreet/autoscaler/manager/strategy/threshold"
@@ -27,7 +26,7 @@ func init() {
 	inventory.Register("marathon", marathon.New)
 	monitor.Register("fake", monitor.NewFake)
 	monitor.Register("mesos", monitor.NewMesos)
-	monitor.Register("datadog", datadog.New)
+	monitor.Register("datadog", monitor.NewDatadog)
 	strategy.Register("ratio", ratio.New)
 	strategy.Register("threshold", threshold.New)
 

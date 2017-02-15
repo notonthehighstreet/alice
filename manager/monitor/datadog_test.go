@@ -1,9 +1,9 @@
-package datadog_test
+package monitor_test
 
 import (
 	"errors"
 	"github.com/Sirupsen/logrus"
-	"github.com/notonthehighstreet/autoscaler/manager/monitor/datadog"
+	"github.com/notonthehighstreet/autoscaler/manager/monitor"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	datadogclient "github.com/zorkian/go-datadog-api"
@@ -11,28 +11,27 @@ import (
 	"time"
 )
 
-var log = logrus.WithFields(logrus.Fields{
-	"manager": "Mock",
-	"monitor": "DatadogMonitor",
-})
-var monitor *datadog.DatadogMonitor
-var config *viper.Viper
-var mockDatadogClient datadog.MockDatadogClient
+var datadogMon *monitor.Datadog
+var mockDatadogClient monitor.MockDatadogClient
 
-func setupTest() {
+func setupDatadogTest() {
 	config = viper.New()
+	log = logrus.WithFields(logrus.Fields{
+		"manager": "Mock",
+		"monitor": "DatadogMonitor",
+	})
 	config.Set("api_key", "foo")
 	config.Set("app_key", "bar")
 	config.Set("time_period", "5m")
 	log.Logger.Level = logrus.DebugLevel
-	mockDatadogClient = datadog.MockDatadogClient{}
-	m, _ := datadog.New(config, log)
-	monitor = m.(*datadog.DatadogMonitor)
-	monitor.Client = &mockDatadogClient
+	mockDatadogClient = monitor.MockDatadogClient{}
+	m, _ := monitor.NewDatadog(config, log)
+	datadogMon = m.(*monitor.Datadog)
+	datadogMon.Client = &mockDatadogClient
 }
 
 func TestDatadog_GetUpdatedMetrics(t *testing.T) {
-	setupTest()
+	setupDatadogTest()
 	config.Set("metrics.foo.bar.baz.query", "avg:foo.bar.baz{*}")
 	metrics := []string{"foo.bar.baz"}
 	mockResponse := []datadogclient.Series{
@@ -44,7 +43,7 @@ func TestDatadog_GetUpdatedMetrics(t *testing.T) {
 	}
 	mockDatadogClient.On("Validate").Return(true, nil)
 	mockDatadogClient.On("QueryMetrics").Return(mockResponse, nil)
-	vp, err := monitor.GetUpdatedMetrics(metrics)
+	vp, err := datadogMon.GetUpdatedMetrics(metrics)
 	assert.NoError(t, err)
 	val := *vp
 	assert.Equal(t, 1, len(val))
@@ -52,30 +51,30 @@ func TestDatadog_GetUpdatedMetrics(t *testing.T) {
 }
 
 func TestDatadog_GetUpdatedMetricsNoData(t *testing.T) {
-	setupTest()
+	setupDatadogTest()
 	metrics := []string{"foo.bar.baz"}
 	mockDatadogClient.On("Validate").Return(true, nil)
 
 	mockResponse := []datadogclient.Series{}
 	mockDatadogClient.On("QueryMetrics").Return(mockResponse, nil).Once()
-	_, err1 := monitor.GetUpdatedMetrics(metrics)
+	_, err1 := datadogMon.GetUpdatedMetrics(metrics)
 	assert.Error(t, err1)
 
 	mockResponse = []datadogclient.Series{
 		{Points: []datadogclient.DataPoint{}},
 	}
 	mockDatadogClient.On("QueryMetrics").Return(mockResponse, nil).Once()
-	_, err2 := monitor.GetUpdatedMetrics(metrics)
+	_, err2 := datadogMon.GetUpdatedMetrics(metrics)
 	assert.Error(t, err2)
 }
 
 func TestDatadogMonitorInvalidApiKey(t *testing.T) {
-	setupTest()
+	setupDatadogTest()
 	metrics := []string{"foo.bar.baz"}
 	mockDatadogClient.On("Validate").Return(false, nil).Once()
-	_, eA := monitor.GetUpdatedMetrics(metrics)
+	_, eA := datadogMon.GetUpdatedMetrics(metrics)
 	assert.Error(t, eA)
 	mockDatadogClient.On("Validate").Return(true, errors.New("")).Once()
-	_, eB := monitor.GetUpdatedMetrics(metrics)
+	_, eB := datadogMon.GetUpdatedMetrics(metrics)
 	assert.Error(t, eB)
 }
