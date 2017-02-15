@@ -1,4 +1,4 @@
-package datadog
+package monitor
 
 import (
 	"github.com/stretchr/testify/mock"
