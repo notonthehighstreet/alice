@@ -1,8 +1,8 @@
-package inventory_test
+package monitor_test
 
 import (
 	"github.com/Sirupsen/logrus"
-	"github.com/notonthehighstreet/autoscaler/manager/inventory"
+	"github.com/notonthehighstreet/autoscaler/monitor"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -15,12 +15,12 @@ func setupTest() {
 	log = logrus.WithFields(logrus.Fields{
 		"manager": "Mock",
 	})
-	inventory.Register("mock", inventory.MockNew)
+	monitor.Register("mock", monitor.MockNew)
 	config.Set("name", "mock")
 }
 
 func TestNew(t *testing.T) {
 	setupTest()
-	i, _ := inventory.New(config, log)
-	assert.IsType(t, &inventory.MockInventory{}, i)
+	i, _ := monitor.New(config, log)
+	assert.IsType(t, &monitor.MockMonitor{}, i)
 }

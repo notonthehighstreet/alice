@@ -4,7 +4,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/autoscaling"
-	"github.com/notonthehighstreet/autoscaler/manager/inventory"
+	"github.com/notonthehighstreet/autoscaler/inventory"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"testing"

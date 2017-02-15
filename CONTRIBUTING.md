@@ -35,7 +35,7 @@ With this file saved as `./config/config.yaml`, you should be able to run Alice.
 Make sure your code works with the [fakes](#running-alice-locally). If you're working on a new monitor, run
 it with a fake inventory, and the reverse if you're working on an inventory.
 
-Make sure you have an `*_test.go` file with reasonable coverage and that `go test -race -cover ./manager/` passes.
+Make sure you have an `*_test.go` file with reasonable coverage and that `go test -race -cover $(go list ./... | grep -v /vendor/)` passes.
 
 ## Submitting Code
 

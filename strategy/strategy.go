@@ -3,8 +3,8 @@ package strategy
 import (
 	"errors"
 	"github.com/Sirupsen/logrus"
-	"github.com/notonthehighstreet/autoscaler/manager/inventory"
-	"github.com/notonthehighstreet/autoscaler/manager/monitor"
+	"github.com/notonthehighstreet/autoscaler/inventory"
+	"github.com/notonthehighstreet/autoscaler/monitor"
 	"github.com/spf13/viper"
 	"strings"
 )

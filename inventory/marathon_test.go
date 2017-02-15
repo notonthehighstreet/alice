@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"testing"
 
-	"github.com/notonthehighstreet/autoscaler/manager/inventory"
+	"github.com/notonthehighstreet/autoscaler/inventory"
 )
 
 var marathonInv *inventory.Marathon

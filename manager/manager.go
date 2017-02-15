@@ -2,9 +2,9 @@ package manager
 
 import (
 	"github.com/Sirupsen/logrus"
-	"github.com/notonthehighstreet/autoscaler/manager/inventory"
-	"github.com/notonthehighstreet/autoscaler/manager/monitor"
-	"github.com/notonthehighstreet/autoscaler/manager/strategy"
+	"github.com/notonthehighstreet/autoscaler/inventory"
+	"github.com/notonthehighstreet/autoscaler/monitor"
+	"github.com/notonthehighstreet/autoscaler/strategy"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 )

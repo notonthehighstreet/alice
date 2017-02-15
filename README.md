@@ -82,7 +82,7 @@ managers:
 
 ## How to test the software
 
-The tests for Alice can be run using `go test` like this: `go test -race -cover ./manager/...`
+The tests for Alice can be run using `go test` like this: `go test -race -cover $(go list ./... | grep -v /vendor/)`
 
 Alternatively you can run `make test`
 
