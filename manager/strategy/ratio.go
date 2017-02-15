@@ -1,29 +1,28 @@
-package ratio
+package strategy
 
 import (
 	"errors"
 	"github.com/Sirupsen/logrus"
 	"github.com/notonthehighstreet/autoscaler/manager/inventory"
 	"github.com/notonthehighstreet/autoscaler/manager/monitor"
-	"github.com/notonthehighstreet/autoscaler/manager/strategy"
 	"github.com/spf13/viper"
 	"math"
 )
 
 // RatioStrategy tries to keep the resources in an inventory at a set ratio to a current metric reading
-type RatioStrategy struct {
+type Ratio struct {
 	Config    *viper.Viper
 	Inventory inventory.Inventory
 	Monitor   monitor.Monitor
 	log       *logrus.Entry
 }
 
-func New(config *viper.Viper, inv inventory.Inventory, mon monitor.Monitor, log *logrus.Entry) (strategy.Strategy, error) {
-	return &RatioStrategy{Config: config, Inventory: inv, Monitor: mon, log: log}, nil
+func NewRatio(config *viper.Viper, inv inventory.Inventory, mon monitor.Monitor, log *logrus.Entry) (Strategy, error) {
+	return &Ratio{Config: config, Inventory: inv, Monitor: mon, log: log}, nil
 }
 
-func (r *RatioStrategy) Evaluate() (*strategy.Recommendation, error) {
-	finalRecommendation := strategy.SCALEDOWN
+func (r *Ratio) Evaluate() (*Recommendation, error) {
+	finalRecommendation := SCALEDOWN
 
 	var metricNames []string
 	for metricName := range r.Config.GetStringMap("ratios") {
@@ -39,7 +38,7 @@ func (r *RatioStrategy) Evaluate() (*strategy.Recommendation, error) {
 	}
 	for _, metric := range *metricUpdates {
 		metricConfig := r.Config.Sub("ratios." + metric.Name)
-		var metricRecommendation strategy.Recommendation
+		var metricRecommendation Recommendation
 		if !metricConfig.IsSet("metric") || !metricConfig.IsSet("inventory") {
 			return nil, errors.New("Strategy requires 'metric' and 'inventory' numbers for each ratio")
 		}
@@ -54,11 +53,11 @@ func (r *RatioStrategy) Evaluate() (*strategy.Recommendation, error) {
 
 		switch {
 		case currentTotal < t:
-			metricRecommendation = strategy.SCALEUP
+			metricRecommendation = SCALEUP
 		case currentTotal == t:
-			metricRecommendation = strategy.HOLD
+			metricRecommendation = HOLD
 		case currentTotal > t:
-			metricRecommendation = strategy.SCALEDOWN
+			metricRecommendation = SCALEDOWN
 		default:
 			return nil, errors.New("Strategy: Something went wrong")
 		}
