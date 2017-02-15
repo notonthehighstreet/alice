@@ -6,12 +6,42 @@ import (
 	"github.com/heirko/go-contrib/logrusHelper"
 	"github.com/johntdyer/slackrus"
 	"github.com/notonthehighstreet/autoscaler/manager"
+	"github.com/notonthehighstreet/autoscaler/manager/inventory"
+	"github.com/notonthehighstreet/autoscaler/manager/inventory/aws"
+	"github.com/notonthehighstreet/autoscaler/manager/inventory/fake"
+	"github.com/notonthehighstreet/autoscaler/manager/inventory/marathon"
+	"github.com/notonthehighstreet/autoscaler/manager/monitor"
+	"github.com/notonthehighstreet/autoscaler/manager/monitor/datadog"
+	"github.com/notonthehighstreet/autoscaler/manager/monitor/fake"
+	"github.com/notonthehighstreet/autoscaler/manager/monitor/mesos"
+	"github.com/notonthehighstreet/autoscaler/manager/strategy"
+	"github.com/notonthehighstreet/autoscaler/manager/strategy/ratio"
+	"github.com/notonthehighstreet/autoscaler/manager/strategy/threshold"
 	conf "github.com/spf13/viper"
 	"time"
 )
 
+func init() {
+	// Register plugins at load time
+	inventory.Register("aws", aws.New)
+	inventory.Register("fake", fake_inventory.New)
+	inventory.Register("marathon", marathon.New)
+	monitor.Register("fake", fake_monitor.New)
+	monitor.Register("mesos", mesos.New)
+	monitor.Register("datadog", datadog.New)
+	strategy.Register("ratio", ratio.New)
+	strategy.Register("threshold", threshold.New)
+
+	// Setup config
+	conf.AddConfigPath("./config")
+	if err := conf.ReadInConfig(); err != nil {
+		logrus.Panicf("Fatal error config file: %s \n", err)
+	}
+	conf.SetDefault("interval", 2*time.Minute)
+	conf.SetDefault("logging.level", "info")
+}
+
 func main() {
-	configure()
 	log := initLogger()
 	managers := make(map[string]manager.Manager)
 
@@ -31,17 +61,6 @@ func main() {
 			manager.Run()
 		}
 	}
-}
-
-func configure() {
-	conf.AddConfigPath("./config")
-	err := conf.ReadInConfig()
-	if err != nil {
-		logrus.Panicf("Fatal error config file: %s \n", err)
-	}
-
-	conf.SetDefault("interval", 2*time.Minute)
-	conf.SetDefault("logging.level", "info")
 }
 
 func initLogger() *logrus.Entry {
