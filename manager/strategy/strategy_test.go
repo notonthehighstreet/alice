@@ -10,6 +10,8 @@ import (
 	"testing"
 )
 
+var mockInventory *inventory.MockInventory
+var mockMonitor *monitor.MockMonitor
 var config = viper.New()
 var log *logrus.Entry
 
@@ -19,12 +21,14 @@ func setupTest() {
 	})
 	strategy.Register("mock", strategy.MockNew)
 	config.Set("name", "mock")
+	m, _ := monitor.MockNew(config, log)
+	mockMonitor = m.(*monitor.MockMonitor)
+	i, _ := inventory.MockNew(config, log)
+	mockInventory, _ = i.(*inventory.MockInventory)
 }
 
 func TestNew(t *testing.T) {
 	setupTest()
-	m, _ := monitor.MockNew(config, log)
-	i, _ := inventory.MockNew(config, log)
-	s, _ := strategy.New(config, i, m, log)
+	s, _ := strategy.New(config, mockInventory, mockMonitor, log)
 	assert.IsType(t, &strategy.MockStrategy{}, s)
 }

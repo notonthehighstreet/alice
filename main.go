@@ -9,7 +9,6 @@ import (
 	"github.com/notonthehighstreet/autoscaler/manager/inventory"
 	"github.com/notonthehighstreet/autoscaler/manager/monitor"
 	"github.com/notonthehighstreet/autoscaler/manager/strategy"
-	"github.com/notonthehighstreet/autoscaler/manager/strategy/threshold"
 	conf "github.com/spf13/viper"
 	"sync"
 	"time"
@@ -24,7 +23,7 @@ func init() {
 	monitor.Register("mesos", monitor.NewMesos)
 	monitor.Register("datadog", monitor.NewDatadog)
 	strategy.Register("ratio", strategy.NewRatio)
-	strategy.Register("threshold", threshold.New)
+	strategy.Register("threshold", strategy.NewThreshold)
 
 	// Setup config
 	conf.AddConfigPath("./config")
