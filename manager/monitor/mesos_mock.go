@@ -1,4 +1,4 @@
-package mesos
+package monitor
 
 import (
 	"github.com/andygrunwald/megos"
