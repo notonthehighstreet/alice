@@ -5,8 +5,8 @@ import (
 	"github.com/evalphobia/logrus_fluent"
 	"github.com/heirko/go-contrib/logrusHelper"
 	"github.com/johntdyer/slackrus"
+	"github.com/notonthehighstreet/autoscaler"
 	"github.com/notonthehighstreet/autoscaler/inventory"
-	"github.com/notonthehighstreet/autoscaler/manager"
 	"github.com/notonthehighstreet/autoscaler/monitor"
 	"github.com/notonthehighstreet/autoscaler/strategy"
 	conf "github.com/spf13/viper"
@@ -36,9 +36,9 @@ func init() {
 
 func main() {
 	log := initLogger()
-	var managers []manager.Manager
+	var managers []autoscaler.Manager
 	for name := range conf.GetStringMap("managers") {
-		if mgr, err := manager.New(conf.Sub("managers."+name), log.WithField("manager", name)); err != nil {
+		if mgr, err := autoscaler.New(conf.Sub("managers."+name), log.WithField("manager", name)); err != nil {
 			log.Fatalf("Error initializing manager: %s", err.Error())
 		} else {
 			managers = append(managers, mgr)
