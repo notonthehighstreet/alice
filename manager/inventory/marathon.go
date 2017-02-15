@@ -1,11 +1,10 @@
-package marathon
+package inventory
 
 import (
 	"errors"
 	"fmt"
 	"github.com/Sirupsen/logrus"
 	"github.com/gambol99/go-marathon"
-	"github.com/notonthehighstreet/autoscaler/manager/inventory"
 	"github.com/spf13/viper"
 	"time"
 )
@@ -15,14 +14,14 @@ type MarathonClient interface {
 	ScaleApplicationInstances(name string, instances int, force bool) (*marathon.DeploymentID, error)
 }
 
-type MarathonInventory struct {
+type Marathon struct {
 	log          *logrus.Entry
 	Client       MarathonClient
 	Config       *viper.Viper
 	lastModified time.Time
 }
 
-func New(config *viper.Viper, log *logrus.Entry) (inventory.Inventory, error) {
+func NewMarathon(config *viper.Viper, log *logrus.Entry) (Inventory, error) {
 	requiredConfig := []string{"app", "url"}
 	for _, item := range requiredConfig {
 		if !config.IsSet(item) {
@@ -36,11 +35,11 @@ func New(config *viper.Viper, log *logrus.Entry) (inventory.Inventory, error) {
 	if err != nil {
 		return nil, err
 	}
-	a := MarathonInventory{log: log, Config: config, Client: client}
+	a := Marathon{log: log, Config: config, Client: client}
 	return &a, nil
 }
 
-func (m *MarathonInventory) Total() (int, error) {
+func (m *Marathon) Total() (int, error) {
 	app, err := m.GetApplication()
 	if err != nil {
 		return 0, err
@@ -48,15 +47,15 @@ func (m *MarathonInventory) Total() (int, error) {
 	return *app.Instances, nil
 }
 
-func (m *MarathonInventory) Increase() error {
+func (m *Marathon) Increase() error {
 	return m.Scale(+1)
 }
 
-func (m *MarathonInventory) Decrease() error {
+func (m *Marathon) Decrease() error {
 	return m.Scale(-1)
 }
 
-func (m *MarathonInventory) Scale(amount int) error {
+func (m *Marathon) Scale(amount int) error {
 	// Check inventory status before trying to scale anything
 	var e error
 	app, err := m.GetApplication()
@@ -78,11 +77,11 @@ func (m *MarathonInventory) Scale(amount int) error {
 		return err
 	}
 	switch status {
-	case inventory.UPDATING:
+	case UPDATING:
 		e = errors.New("Won't scale application while another action is in progress")
-	case inventory.FAILED:
+	case FAILED:
 		e = errors.New("Won't scale application while something seems to be in a failed state")
-	case inventory.OK:
+	case OK:
 		if _, err := m.Client.ScaleApplicationInstances(app.ID, currentTotal+amount, false); err != nil {
 			return err
 		}
@@ -96,22 +95,22 @@ func (m *MarathonInventory) Scale(amount int) error {
 	return e
 }
 
-func (m *MarathonInventory) Status() (inventory.Status, error) {
+func (m *Marathon) Status() (Status, error) {
 	app, err := m.GetApplication()
 	if err != nil {
-		return inventory.FAILED, err
+		return FAILED, err
 	}
 	if len(app.DeploymentIDs()) > 0 {
-		return inventory.UPDATING, nil
+		return UPDATING, nil
 	}
 	if time.Now().Before(m.lastModified.Add(m.Config.GetDuration("settle_down_period"))) {
 		m.log.Debugln("Still within settle down period")
-		return inventory.UPDATING, nil
+		return UPDATING, nil
 	}
-	return inventory.OK, nil
+	return OK, nil
 }
 
-func (m *MarathonInventory) GetApplication() (*marathon.Application, error) {
+func (m *Marathon) GetApplication() (*marathon.Application, error) {
 	name := m.Config.GetString("app")
 	app, err := m.Client.ApplicationBy(name, &marathon.GetAppOpts{})
 	if err != nil || app == nil {

@@ -9,15 +9,18 @@ import (
 )
 
 var config = viper.New()
-var log = logrus.Entry{}
+var log *logrus.Entry
 
 func setupTest() {
+	log = logrus.WithFields(logrus.Fields{
+		"manager": "Mock",
+	})
 	inventory.Register("mock", inventory.MockNew)
 	config.Set("name", "mock")
 }
 
 func TestNew(t *testing.T) {
 	setupTest()
-	i, _ := inventory.New(config, &log)
+	i, _ := inventory.New(config, log)
 	assert.IsType(t, &inventory.MockInventory{}, i)
 }
