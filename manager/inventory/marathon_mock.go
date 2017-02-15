@@ -1,4 +1,4 @@
-package marathon
+package inventory
 
 import (
 	"github.com/gambol99/go-marathon"
