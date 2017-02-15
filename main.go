@@ -25,7 +25,7 @@ func init() {
 	inventory.Register("aws", aws.New)
 	inventory.Register("fake", fake_inventory.New)
 	inventory.Register("marathon", marathon.New)
-	monitor.Register("fake", fake_monitor.New)
+	monitor.Register("fake", monitor.NewFake)
 	monitor.Register("mesos", monitor.NewMesos)
 	monitor.Register("datadog", datadog.New)
 	strategy.Register("ratio", ratio.New)
