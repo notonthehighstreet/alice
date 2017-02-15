@@ -1,4 +1,4 @@
-package aws
+package inventory
 
 import (
 	"github.com/aws/aws-sdk-go/service/autoscaling"
