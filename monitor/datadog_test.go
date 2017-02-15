@@ -3,7 +3,7 @@ package monitor_test
 import (
 	"errors"
 	"github.com/Sirupsen/logrus"
-	"github.com/notonthehighstreet/autoscaler/manager/monitor"
+	"github.com/notonthehighstreet/autoscaler/monitor"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	datadogclient "github.com/zorkian/go-datadog-api"

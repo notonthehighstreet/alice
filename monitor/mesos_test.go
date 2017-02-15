@@ -5,7 +5,7 @@ import (
 	"github.com/andygrunwald/megos"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/notonthehighstreet/autoscaler/manager/monitor"
+	"github.com/notonthehighstreet/autoscaler/monitor"
 	"github.com/spf13/viper"
 	"testing"
 )
