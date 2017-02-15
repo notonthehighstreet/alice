@@ -3,16 +3,8 @@ package manager
 import (
 	"github.com/Sirupsen/logrus"
 	"github.com/notonthehighstreet/autoscaler/manager/inventory"
-	"github.com/notonthehighstreet/autoscaler/manager/inventory/aws"
-	"github.com/notonthehighstreet/autoscaler/manager/inventory/fake"
-	"github.com/notonthehighstreet/autoscaler/manager/inventory/marathon"
 	"github.com/notonthehighstreet/autoscaler/manager/monitor"
-	"github.com/notonthehighstreet/autoscaler/manager/monitor/datadog"
-	"github.com/notonthehighstreet/autoscaler/manager/monitor/fake"
-	"github.com/notonthehighstreet/autoscaler/manager/monitor/mesos"
 	"github.com/notonthehighstreet/autoscaler/manager/strategy"
-	"github.com/notonthehighstreet/autoscaler/manager/strategy/ratio"
-	"github.com/notonthehighstreet/autoscaler/manager/strategy/threshold"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 )
@@ -92,16 +84,4 @@ func (m *Manager) Run() error {
 	}
 	return err
 
-}
-
-func init() {
-	// Register plugins at load time
-	inventory.Register("aws", aws.New)
-	inventory.Register("fake", fake_inventory.New)
-	inventory.Register("marathon", marathon.New)
-	monitor.Register("fake", fake_monitor.New)
-	monitor.Register("mesos", mesos.New)
-	monitor.Register("datadog", datadog.New)
-	strategy.Register("ratio", ratio.New)
-	strategy.Register("threshold", threshold.New)
 }
