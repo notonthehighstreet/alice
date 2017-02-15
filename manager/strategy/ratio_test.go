@@ -11,8 +11,6 @@ import (
 	"testing"
 )
 
-var mockInventory inventory.MockInventory
-var mockMonitor monitor.MockMonitor
 var metricUpdates []monitor.MetricUpdate
 var ratioStrategy *strategy.Ratio
 
@@ -24,11 +22,16 @@ func setupRatioTest() {
 	config = viper.New()
 	metricUpdates = []monitor.MetricUpdate{}
 	//metricUpdates = append(metricUpdates, monitor.MetricUpdate{Name: "connections", CurrentReading: 200})
-	mockMonitor.On("GetUpdatedMetrics").Return(&metricUpdates, nil)
 
 	config = viper.New()
-	r, _ := strategy.NewRatio(config, &mockInventory, &mockMonitor, log)
+	m, _ := monitor.MockNew(config, log)
+	mockMonitor = m.(*monitor.MockMonitor)
+	i, _ := inventory.MockNew(config, log)
+	mockInventory, _ = i.(*inventory.MockInventory)
+	r, _ := strategy.NewRatio(config, mockInventory, mockMonitor, log)
 	ratioStrategy = r.(*strategy.Ratio)
+
+	mockMonitor.On("GetUpdatedMetrics").Return(&metricUpdates, nil)
 }
 func TestRatioStrategy_Evaluate(t *testing.T) {
 	setupRatioTest()
