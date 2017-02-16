@@ -13,17 +13,17 @@ var config = viper.New()
 var log = logrus.WithFields(logrus.Fields{
 	"manager": "Test",
 })
-var inv alice.MockInventory
-var mon alice.MockMonitor
-var str alice.MockStrategy
+var inv MockInventory
+var mon MockMonitor
+var str MockStrategy
 var recommendation alice.Recommendation
 var man alice.Manager
 
 func init() {
 	// Register plugins at load time
-	alice.RegisterInventory("mock", alice.NewMockInventory)
-	alice.RegisterMonitor("mock", alice.NewMockMonitor)
-	alice.RegisterStrategy("mock", alice.NewMockStrategy)
+	alice.RegisterInventory("mock", NewMockInventory)
+	alice.RegisterMonitor("mock", NewMockMonitor)
+	alice.RegisterStrategy("mock", NewMockStrategy)
 }
 
 func setupManagerTest() {

@@ -22,10 +22,10 @@ func setupRatioStrategyTest() {
 	metricUpdates = []alice.MetricUpdate{}
 
 	config = viper.New()
-	m, _ := alice.NewMockMonitor(config, log)
-	mockMonitor = m.(*alice.MockMonitor)
-	i, _ := alice.NewMockInventory(config, log)
-	mockInventory, _ = i.(*alice.MockInventory)
+	m, _ := NewMockMonitor(config, log)
+	mockMonitor = m.(*MockMonitor)
+	i, _ := NewMockInventory(config, log)
+	mockInventory, _ = i.(*MockInventory)
 	r, _ := alice.NewRatioStrategy(config, mockInventory, mockMonitor, log)
 	ratioStrategy = r.(*alice.RatioStrategy)
 
