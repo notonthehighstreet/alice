@@ -1,10 +1,8 @@
-package strategy
+package autoscaler
 
 import (
 	"errors"
 	"github.com/Sirupsen/logrus"
-	"github.com/notonthehighstreet/autoscaler/inventory"
-	"github.com/notonthehighstreet/autoscaler/monitor"
 	"github.com/spf13/viper"
 	"strings"
 )
@@ -23,11 +21,11 @@ const (
 
 // Create a hash for storing the names of registered strategies and their New() methods
 // eg {'foo': foo.New(), 'bar': bar.New(), 'baz': baz.New()}
-type factoryFunction func(config *viper.Viper, inv inventory.Inventory, mon monitor.Monitor, log *logrus.Entry) (Strategy, error)
+type strategyFactoryFunc func(config *viper.Viper, inv Inventory, mon Monitor, log *logrus.Entry) (Strategy, error)
 
-var strategies = make(map[string]factoryFunction)
+var strategies = make(map[string]strategyFactoryFunc)
 
-func Register(name string, factory factoryFunction) {
+func RegisterStrategy(name string, factory strategyFactoryFunc) {
 	if factory == nil {
 		logrus.Panicf("New() for %s does not exist.", name)
 	}
@@ -38,7 +36,7 @@ func Register(name string, factory factoryFunction) {
 	strategies[name] = factory
 }
 
-func New(config *viper.Viper, inv inventory.Inventory, mon monitor.Monitor, log *logrus.Entry) (Strategy, error) {
+func NewStrategy(config *viper.Viper, inv Inventory, mon Monitor, log *logrus.Entry) (Strategy, error) {
 	// Find the correct monitor and return it
 	if !config.IsSet("name") {
 		return nil, errors.New("No strategy name provided")

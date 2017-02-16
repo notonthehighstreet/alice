@@ -1,22 +1,22 @@
-package inventory_test
+package autoscaler_test
 
 import (
 	"github.com/Sirupsen/logrus"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/autoscaling"
-	"github.com/notonthehighstreet/autoscaler/inventory"
+	"github.com/notonthehighstreet/autoscaler"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
-var mockEc2MetadataClient inventory.MockEC2MetadataClient
-var mockAutoscalingClient inventory.MockAutoScalingClient
+var mockEc2MetadataClient autoscaler.MockEC2MetadataClient
+var mockAutoscalingClient autoscaler.MockAutoScalingClient
 var asg autoscaling.DescribeAutoScalingGroupsOutput
 var asgScalingActivities autoscaling.DescribeScalingActivitiesOutput
-var AWSInv *inventory.AWS
+var AWSInv *autoscaler.AWSInventory
 
-func setupAWSTest() {
+func setupAWSInventoryTest() {
 	log = logrus.WithFields(logrus.Fields{
 		"manager":   "Mock",
 		"inventory": "AWSInventory",
@@ -52,45 +52,45 @@ func setupAWSTest() {
 	mockAutoscalingClient.On("SetDesiredCapacity").Return(nil)
 	log.Logger.Level = logrus.DebugLevel
 
-	i, _ := inventory.NewAWS(viper.New(), log)
-	AWSInv = i.(*inventory.AWS)
+	i, _ := autoscaler.NewAWSInventory(viper.New(), log)
+	AWSInv = i.(*autoscaler.AWSInventory)
 	AWSInv.AutoscalingSvc = &mockAutoscalingClient
 	AWSInv.EC2metadataSvc = &mockEc2MetadataClient
 }
 
-func TestAWS_Scale(t *testing.T) {
-	setupAWSTest()
+func TestAWSInventory_Scale(t *testing.T) {
+	setupAWSInventoryTest()
 	err := AWSInv.Scale(1)
 	assert.Nil(t, err)
 }
 
-func TestAWS_GroupName(t *testing.T) {
-	setupAWSTest()
+func TestAWSInventory_GroupName(t *testing.T) {
+	setupAWSInventoryTest()
 	name := AWSInv.GroupName()
 	assert.Equal(t, name, "foo")
 }
 
-func TestAWS_Total(t *testing.T) {
-	setupAWSTest()
+func TestAWSInventory_Total(t *testing.T) {
+	setupAWSInventoryTest()
 	total, _ := AWSInv.Total()
 	assert.Equal(t, total, 1)
 }
 
-func TestAWS_Increase(t *testing.T) {
-	setupAWSTest()
+func TestAWSInventory_Increase(t *testing.T) {
+	setupAWSInventoryTest()
 	assert.Nil(t, AWSInv.Increase())
 	asgScalingActivities.Activities[0].StatusCode = aws.String(autoscaling.ScalingActivityStatusCodeInProgress)
 	assert.Error(t, AWSInv.Increase())
 }
 
-func TestAWS_Decrease(t *testing.T) {
-	setupAWSTest()
+func TestAWSInventory_Decrease(t *testing.T) {
+	setupAWSInventoryTest()
 	assert.Nil(t, AWSInv.Decrease())
 	asgScalingActivities.Activities[0].StatusCode = aws.String(autoscaling.ScalingActivityStatusCodeInProgress)
 	assert.Error(t, AWSInv.Decrease())
 }
 
-func TestAWS_Status(t *testing.T) {
+func TestAWSInventory_Status(t *testing.T) {
 	failedActivity := &autoscaling.Activity{
 		ActivityId: aws.String("failed-activity"),
 		StatusCode: aws.String(autoscaling.ScalingActivityStatusCodeFailed),
@@ -99,23 +99,23 @@ func TestAWS_Status(t *testing.T) {
 		ActivityId: aws.String("updating-activity"),
 		StatusCode: aws.String(autoscaling.ScalingActivityStatusCodeInProgress),
 	}
-	setupAWSTest()
+	setupAWSInventoryTest()
 	status, _ := AWSInv.Status()
-	assert.Equal(t, inventory.OK, status)
+	assert.Equal(t, autoscaler.OK, status)
 	asgScalingActivities.Activities = append(asgScalingActivities.Activities, updatingActivity)
 	status, _ = AWSInv.Status()
-	assert.Equal(t, inventory.UPDATING, status)
+	assert.Equal(t, autoscaler.UPDATING, status)
 	asgScalingActivities.Activities = append(asgScalingActivities.Activities, failedActivity)
 	status, _ = AWSInv.Status()
-	assert.Equal(t, inventory.FAILED, status)
+	assert.Equal(t, autoscaler.FAILED, status)
 }
 
-func TestAWS_SettleDownTime(t *testing.T) {
-	setupAWSTest()
+func TestAWSInventory_SettleDownTime(t *testing.T) {
+	setupAWSInventoryTest()
 	AWSInv.Config.Set("settle_down_period", "5m")
 	assert.Nil(t, AWSInv.Increase())
 	status, _ := AWSInv.Status()
-	assert.Equal(t, inventory.UPDATING, status)
+	assert.Equal(t, autoscaler.UPDATING, status)
 	assert.Error(t, AWSInv.Decrease())
 	assert.Error(t, AWSInv.Increase())
 }

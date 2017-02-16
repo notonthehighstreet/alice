@@ -6,9 +6,6 @@ import (
 	"github.com/heirko/go-contrib/logrusHelper"
 	"github.com/johntdyer/slackrus"
 	"github.com/notonthehighstreet/autoscaler"
-	"github.com/notonthehighstreet/autoscaler/inventory"
-	"github.com/notonthehighstreet/autoscaler/monitor"
-	"github.com/notonthehighstreet/autoscaler/strategy"
 	conf "github.com/spf13/viper"
 	"sync"
 	"time"
@@ -16,14 +13,14 @@ import (
 
 func init() {
 	// Register plugins at load time
-	inventory.Register("aws", inventory.NewAWS)
-	inventory.Register("fake", inventory.NewFake)
-	inventory.Register("marathon", inventory.NewMarathon)
-	monitor.Register("fake", monitor.NewFake)
-	monitor.Register("mesos", monitor.NewMesos)
-	monitor.Register("datadog", monitor.NewDatadog)
-	strategy.Register("ratio", strategy.NewRatio)
-	strategy.Register("threshold", strategy.NewThreshold)
+	autoscaler.RegisterInventory("aws", autoscaler.NewAWSInventory)
+	autoscaler.RegisterInventory("fake", autoscaler.NewFakeInventory)
+	autoscaler.RegisterInventory("marathon", autoscaler.NewMarathonInventory)
+	autoscaler.RegisterMonitor("fake", autoscaler.NewFakeMonitor)
+	autoscaler.RegisterMonitor("mesos", autoscaler.NewMesosMonitor)
+	autoscaler.RegisterMonitor("datadog", autoscaler.NewDatadogMonitor)
+	autoscaler.RegisterStrategy("ratio", autoscaler.NewRatioStrategy)
+	autoscaler.RegisterStrategy("threshold", autoscaler.NewThresholdStrategy)
 
 	// Setup config
 	conf.AddConfigPath("./config")

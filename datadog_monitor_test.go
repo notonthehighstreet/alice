@@ -1,9 +1,9 @@
-package monitor_test
+package autoscaler_test
 
 import (
 	"errors"
 	"github.com/Sirupsen/logrus"
-	"github.com/notonthehighstreet/autoscaler/monitor"
+	"github.com/notonthehighstreet/autoscaler"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	datadogclient "github.com/zorkian/go-datadog-api"
@@ -11,10 +11,10 @@ import (
 	"time"
 )
 
-var datadogMon *monitor.Datadog
-var mockDatadogClient monitor.MockDatadogClient
+var datadogMon *autoscaler.DatadogMonitor
+var mockDatadogClient autoscaler.MockDatadogClient
 
-func setupDatadogTest() {
+func setupDatadogMonitorTest() {
 	config = viper.New()
 	log = logrus.WithFields(logrus.Fields{
 		"manager": "Mock",
@@ -24,14 +24,14 @@ func setupDatadogTest() {
 	config.Set("app_key", "bar")
 	config.Set("time_period", "5m")
 	log.Logger.Level = logrus.DebugLevel
-	mockDatadogClient = monitor.MockDatadogClient{}
-	m, _ := monitor.NewDatadog(config, log)
-	datadogMon = m.(*monitor.Datadog)
+	mockDatadogClient = autoscaler.MockDatadogClient{}
+	m, _ := autoscaler.NewDatadogMonitor(config, log)
+	datadogMon = m.(*autoscaler.DatadogMonitor)
 	datadogMon.Client = &mockDatadogClient
 }
 
-func TestDatadog_GetUpdatedMetrics(t *testing.T) {
-	setupDatadogTest()
+func TestDatadogMonitor_GetUpdatedMetrics(t *testing.T) {
+	setupDatadogMonitorTest()
 	config.Set("metrics.foo.bar.baz.query", "avg:foo.bar.baz{*}")
 	metrics := []string{"foo.bar.baz"}
 	mockResponse := []datadogclient.Series{
@@ -50,8 +50,8 @@ func TestDatadog_GetUpdatedMetrics(t *testing.T) {
 	assert.Equal(t, 0.5, val[0].CurrentReading)
 }
 
-func TestDatadog_GetUpdatedMetricsNoData(t *testing.T) {
-	setupDatadogTest()
+func TestDatadogMonitor_GetUpdatedMetricsNoData(t *testing.T) {
+	setupDatadogMonitorTest()
 	metrics := []string{"foo.bar.baz"}
 	mockDatadogClient.On("Validate").Return(true, nil)
 
@@ -69,7 +69,7 @@ func TestDatadog_GetUpdatedMetricsNoData(t *testing.T) {
 }
 
 func TestDatadogMonitorInvalidApiKey(t *testing.T) {
-	setupDatadogTest()
+	setupDatadogMonitorTest()
 	metrics := []string{"foo.bar.baz"}
 	mockDatadogClient.On("Validate").Return(false, nil).Once()
 	_, eA := datadogMon.GetUpdatedMetrics(metrics)

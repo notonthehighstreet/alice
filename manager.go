@@ -2,17 +2,14 @@ package autoscaler
 
 import (
 	"github.com/Sirupsen/logrus"
-	"github.com/notonthehighstreet/autoscaler/inventory"
-	"github.com/notonthehighstreet/autoscaler/monitor"
-	"github.com/notonthehighstreet/autoscaler/strategy"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 )
 
 type Manager struct {
-	Inventory inventory.Inventory
+	Inventory Inventory
 	Logger    *logrus.Entry
-	Strategy  strategy.Strategy
+	Strategy  Strategy
 	Config    *viper.Viper
 }
 
@@ -25,19 +22,19 @@ func New(config *viper.Viper, log *logrus.Entry) (Manager, error) {
 	}
 
 	log.Info("Initialising inventory")
-	inv, err := inventory.New(config.Sub("inventory"), log)
+	inv, err := NewInventory(config.Sub("inventory"), log)
 	if err != nil {
 		return Manager{}, errors.Wrap(err, "Error initialization inventory")
 	}
 
 	log.Info("Initialising monitor")
-	monitor, err := monitor.New(config.Sub("monitor"), log)
+	monitor, err := NewMonitor(config.Sub("monitor"), log)
 	if err != nil {
 		return Manager{}, errors.Wrap(err, "Error initialization monitor")
 	}
 
 	log.Info("Initialising strategy")
-	str, err := strategy.New(config.Sub("strategy"), inv, monitor, log)
+	str, err := NewStrategy(config.Sub("strategy"), inv, monitor, log)
 	if err != nil {
 		return Manager{}, errors.Wrap(err, "Error initializing strategy")
 	}
@@ -53,7 +50,7 @@ func (m *Manager) Run() error {
 	invName, stratName, monName := m.Config.GetString("inventory.name"), m.Config.GetString("strategy.name"), m.Config.GetString("monitor.name")
 	if err == nil {
 		switch *rec {
-		case strategy.SCALEUP:
+		case SCALEUP:
 			if m.Config.GetBool("scale_up") {
 				err = m.Inventory.Increase()
 				if err != nil {
@@ -64,9 +61,9 @@ func (m *Manager) Run() error {
 			} else {
 				m.Logger.Warnf("I would have scaled up our %s inventory based on the %s strategy using information from %s but am running in advisory mode", invName, stratName, monName)
 			}
-		case strategy.HOLD:
+		case HOLD:
 			m.Logger.Info("Doing nothing")
-		case strategy.SCALEDOWN:
+		case SCALEDOWN:
 			if m.Config.GetBool("scale_down") {
 				err = m.Inventory.Decrease()
 				if err != nil {

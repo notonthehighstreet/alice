@@ -1,28 +1,26 @@
-package strategy
+package autoscaler
 
 import (
 	"fmt"
 	"github.com/Sirupsen/logrus"
-	"github.com/notonthehighstreet/autoscaler/inventory"
-	"github.com/notonthehighstreet/autoscaler/monitor"
 	"github.com/spf13/viper"
 )
 
-type Threshold struct {
+type ThresholdStrategy struct {
 	Config *viper.Viper
 	// <metric name>: [<lower threshold>, <upper threshold>]
 	// Strategy aims to keep the value in the middle but will always recommend scaling up if any metric
 	// is above it's upper threshold
-	Inventory inventory.Inventory
-	Monitor   monitor.Monitor
+	Inventory Inventory
+	Monitor   Monitor
 	log       *logrus.Entry
 }
 
-func NewThreshold(config *viper.Viper, inv inventory.Inventory, mon monitor.Monitor, log *logrus.Entry) (Strategy, error) {
-	return &Threshold{Config: config, Inventory: inv, Monitor: mon, log: log}, nil
+func NewThresholdStrategy(config *viper.Viper, inv Inventory, mon Monitor, log *logrus.Entry) (Strategy, error) {
+	return &ThresholdStrategy{Config: config, Inventory: inv, Monitor: mon, log: log}, nil
 }
 
-func (p *Threshold) Evaluate() (*Recommendation, error) {
+func (p *ThresholdStrategy) Evaluate() (*Recommendation, error) {
 	finalRecommendation := SCALEDOWN
 
 	var metricNames []string

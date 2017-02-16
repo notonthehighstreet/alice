@@ -1,4 +1,4 @@
-package monitor
+package autoscaler
 
 import (
 	"github.com/Sirupsen/logrus"
@@ -15,6 +15,6 @@ func (m *MockMonitor) GetUpdatedMetrics(names []string) (*[]MetricUpdate, error)
 	return args.Get(0).(*[]MetricUpdate), args.Error(1)
 }
 
-func MockNew(_ *viper.Viper, _ *logrus.Entry) (Monitor, error) {
+func NewMockMonitor(_ *viper.Viper, _ *logrus.Entry) (Monitor, error) {
 	return &MockMonitor{}, nil
 }

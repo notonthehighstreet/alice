@@ -1,4 +1,4 @@
-package monitor
+package autoscaler
 
 import (
 	"github.com/andygrunwald/megos"

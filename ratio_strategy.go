@@ -1,27 +1,25 @@
-package strategy
+package autoscaler
 
 import (
 	"errors"
 	"github.com/Sirupsen/logrus"
-	"github.com/notonthehighstreet/autoscaler/inventory"
-	"github.com/notonthehighstreet/autoscaler/monitor"
 	"github.com/spf13/viper"
 	"math"
 )
 
 // RatioStrategy tries to keep the resources in an inventory at a set ratio to a current metric reading
-type Ratio struct {
+type RatioStrategy struct {
 	Config    *viper.Viper
-	Inventory inventory.Inventory
-	Monitor   monitor.Monitor
+	Inventory Inventory
+	Monitor   Monitor
 	log       *logrus.Entry
 }
 
-func NewRatio(config *viper.Viper, inv inventory.Inventory, mon monitor.Monitor, log *logrus.Entry) (Strategy, error) {
-	return &Ratio{Config: config, Inventory: inv, Monitor: mon, log: log}, nil
+func NewRatioStrategy(config *viper.Viper, inv Inventory, mon Monitor, log *logrus.Entry) (Strategy, error) {
+	return &RatioStrategy{Config: config, Inventory: inv, Monitor: mon, log: log}, nil
 }
 
-func (r *Ratio) Evaluate() (*Recommendation, error) {
+func (r *RatioStrategy) Evaluate() (*Recommendation, error) {
 	finalRecommendation := SCALEDOWN
 
 	var metricNames []string
