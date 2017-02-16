@@ -1,4 +1,4 @@
-package inventory
+package autoscaler
 
 import (
 	"github.com/Sirupsen/logrus"
@@ -27,6 +27,6 @@ func (m *MockInventory) Status() (Status, error) {
 	return args.Get(0).(Status), nil
 }
 
-func MockNew(_ *viper.Viper, _ *logrus.Entry) (Inventory, error) {
+func NewMockInventory(_ *viper.Viper, _ *logrus.Entry) (Inventory, error) {
 	return &MockInventory{}, nil
 }

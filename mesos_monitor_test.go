@@ -1,20 +1,20 @@
-package monitor_test
+package autoscaler_test
 
 import (
 	"github.com/Sirupsen/logrus"
 	"github.com/andygrunwald/megos"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/notonthehighstreet/autoscaler/monitor"
+	"github.com/notonthehighstreet/autoscaler"
 	"github.com/spf13/viper"
 	"testing"
 )
 
-var mockMesosClient monitor.MockMesosClient
+var mockMesosClient autoscaler.MockMesosClient
 var state megos.State
-var mesosMon *monitor.Mesos
+var mesosMon *autoscaler.MesosMonitor
 
-func setupMesosTest() {
+func setupMesosMonitorTest() {
 	log = logrus.WithFields(logrus.Fields{
 		"manager": "Mock",
 		"monitor": "MesosMonitor",
@@ -35,13 +35,13 @@ func setupMesosTest() {
 	}
 	mockMesosClient.On("GetStateFromLeader").Return(state, nil)
 	mockMesosClient.On("DetermineLeader").Return(megos.Pid{}, nil)
-	m, _ := monitor.NewMesos(viper.New(), log)
-	mesosMon = m.(*monitor.Mesos)
+	m, _ := autoscaler.NewMesosMonitor(viper.New(), log)
+	mesosMon = m.(*autoscaler.MesosMonitor)
 	mesosMon.Client = &mockMesosClient
 }
 
-func TestCalculatesStatistics(t *testing.T) {
-	setupMesosTest()
+func TestMesosMonitor_CalculatesStatistics(t *testing.T) {
+	setupMesosMonitorTest()
 	stats, err := mesosMon.Stats()
 	if err != nil {
 		t.Error(err)
@@ -57,8 +57,8 @@ func TestCalculatesStatistics(t *testing.T) {
 	assert.Equal(t, float64(2.1), stats.Metrics["mesos.slave.mem_free.max"])
 }
 
-func TestMesosMaster_GetUpdatedMetrics(t *testing.T) {
-	setupMesosTest()
+func TestMesosMonitor_GetUpdatedMetrics(t *testing.T) {
+	setupMesosMonitorTest()
 	_, err := mesosMon.GetUpdatedMetrics([]string{"invalid.metric.name"})
 	assert.NotNil(t, err)
 }

@@ -1,4 +1,4 @@
-package monitor
+package autoscaler
 
 import (
 	"github.com/Sirupsen/logrus"
@@ -8,17 +8,17 @@ import (
 	"net/url"
 )
 
-type Mesos struct {
+type MesosMonitor struct {
 	log    *logrus.Entry
 	Client MesosClient
 	config *viper.Viper
 }
 
-type MesosStats struct {
+type MesosMonitorStats struct {
 	Metrics map[string]float64
 }
 
-func (s *MesosStats) updateMinMax(name string, number float64) {
+func (s *MesosMonitorStats) updateMinMax(name string, number float64) {
 	if min, ok := s.Metrics[name+".min"]; ok {
 		if min > number {
 			s.Metrics[name+".min"] = number
@@ -36,7 +36,7 @@ func (s *MesosStats) updateMinMax(name string, number float64) {
 }
 
 // Add a float64 value to a metric. Takes care of floating point rounding issues by converting to integers and back.
-func (s *MesosStats) add(name string, number float64) {
+func (s *MesosMonitorStats) add(name string, number float64) {
 	if val, ok := s.Metrics[name]; ok {
 		a := int(val * 10) // Mesos resource numbers are to a max of 1 decimal place
 		b := int(number * 10)
@@ -53,17 +53,17 @@ type MesosClient interface {
 
 const defaultMesosMaster = "http://mesos.service.consul:5050/state"
 
-func NewMesos(config *viper.Viper, log *logrus.Entry) (Monitor, error) {
+func NewMesosMonitor(config *viper.Viper, log *logrus.Entry) (Monitor, error) {
 	config.SetDefault("endpoint", defaultMesosMaster)
 	u, err := url.Parse(config.GetString("endpoint"))
 	if err != nil {
 		return nil, errors.Wrap(err, "Can't create mesos monitor")
 	}
 	mesos := megos.NewClient([]*url.URL{u}, nil)
-	return &Mesos{log: log, Client: mesos, config: config}, nil
+	return &MesosMonitor{log: log, Client: mesos, config: config}, nil
 }
 
-func (m *Mesos) GetUpdatedMetrics(names []string) (*[]MetricUpdate, error) {
+func (m *MesosMonitor) GetUpdatedMetrics(names []string) (*[]MetricUpdate, error) {
 	response := make([]MetricUpdate, len(names))
 	stats, err := m.Stats()
 	if err != nil {
@@ -80,14 +80,14 @@ func (m *Mesos) GetUpdatedMetrics(names []string) (*[]MetricUpdate, error) {
 	return &response, nil
 }
 
-func (m *Mesos) Stats() (*MesosStats, error) {
+func (m *MesosMonitor) Stats() (*MesosMonitorStats, error) {
 	m.Client.DetermineLeader()
 	state, err := m.Client.GetStateFromLeader()
 	if err != nil {
 		return nil, errors.Wrap(err, "Error getting Mesos stats")
 	}
 
-	stats := &MesosStats{}
+	stats := &MesosMonitorStats{}
 	stats.Metrics = make(map[string]float64)
 
 	for _, slave := range state.Slaves {

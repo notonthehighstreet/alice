@@ -1,4 +1,4 @@
-package inventory
+package autoscaler
 
 import (
 	"github.com/aws/aws-sdk-go/service/autoscaling"

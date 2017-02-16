@@ -1,4 +1,4 @@
-package inventory
+package autoscaler
 
 import (
 	"errors"
@@ -24,11 +24,11 @@ const (
 
 // Create a hash for storing the names of registered inventories and their New() methods
 // eg {'foo': foo.New(), 'bar': bar.New(), 'baz': baz.New()}
-type factoryFunction func(config *viper.Viper, log *logrus.Entry) (Inventory, error)
+type inventoryFactoryFunc func(config *viper.Viper, log *logrus.Entry) (Inventory, error)
 
-var inventories = make(map[string]factoryFunction)
+var inventories = make(map[string]inventoryFactoryFunc)
 
-func Register(name string, factory factoryFunction) {
+func RegisterInventory(name string, factory inventoryFactoryFunc) {
 	if factory == nil {
 		logrus.Panicf("New() for %s does not exist.", name)
 	}
@@ -39,7 +39,7 @@ func Register(name string, factory factoryFunction) {
 	inventories[name] = factory
 }
 
-func New(config *viper.Viper, log *logrus.Entry) (Inventory, error) {
+func NewInventory(config *viper.Viper, log *logrus.Entry) (Inventory, error) {
 	// Find the correct inventory and return it
 	if !config.IsSet("name") {
 		return nil, errors.New("No inventory name provided")

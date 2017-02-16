@@ -1,9 +1,7 @@
-package strategy
+package autoscaler
 
 import (
 	"github.com/Sirupsen/logrus"
-	"github.com/notonthehighstreet/autoscaler/inventory"
-	"github.com/notonthehighstreet/autoscaler/monitor"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/mock"
 )
@@ -17,6 +15,6 @@ func (m *MockStrategy) Evaluate() (*Recommendation, error) {
 	return args.Get(0).(*Recommendation), args.Error(1)
 }
 
-func MockNew(_ *viper.Viper, _ inventory.Inventory, _ monitor.Monitor, _ *logrus.Entry) (Strategy, error) {
+func NewMockStrategy(_ *viper.Viper, _ Inventory, _ Monitor, _ *logrus.Entry) (Strategy, error) {
 	return &MockStrategy{}, nil
 }

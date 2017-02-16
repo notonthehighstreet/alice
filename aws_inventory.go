@@ -1,4 +1,4 @@
-package inventory
+package autoscaler
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
@@ -17,7 +17,7 @@ type EC2MetadataAPI interface {
 	GetMetadata(string) (string, error)
 }
 
-type AWS struct {
+type AWSInventory struct {
 	log            *logrus.Entry
 	Config         *viper.Viper
 	AutoscalingSvc autoscalingiface.AutoScalingAPI
@@ -38,7 +38,7 @@ const (
 	defaultSettleDownPeriod = "0s"
 )
 
-func NewAWS(config *viper.Viper, log *logrus.Entry) (Inventory, error) {
+func NewAWSInventory(config *viper.Viper, log *logrus.Entry) (Inventory, error) {
 	config.SetDefault("region", defaultAWSRegion)
 	config.SetDefault("settle_down_period", defaultSettleDownPeriod)
 	s, err := session.NewSession()
@@ -47,7 +47,7 @@ func NewAWS(config *viper.Viper, log *logrus.Entry) (Inventory, error) {
 	}
 	region := config.GetString("region")
 	s.Config.Region = &region
-	inv := AWS{
+	inv := AWSInventory{
 		AutoscalingSvc: autoscaling.New(s),
 		EC2metadataSvc: ec2metadata.New(s),
 		log:            log,
@@ -56,7 +56,7 @@ func NewAWS(config *viper.Viper, log *logrus.Entry) (Inventory, error) {
 	return &inv, nil
 }
 
-func (a *AWS) Total() (int, error) {
+func (a *AWSInventory) Total() (int, error) {
 	name := a.GroupName()
 	params := &autoscaling.DescribeAutoScalingGroupsInput{
 		AutoScalingGroupNames: []*string{&name},
@@ -65,15 +65,15 @@ func (a *AWS) Total() (int, error) {
 	return len(group.Instances), nil
 }
 
-func (a *AWS) Increase() error {
+func (a *AWSInventory) Increase() error {
 	return a.Scale(+1)
 }
 
-func (a *AWS) Decrease() error {
+func (a *AWSInventory) Decrease() error {
 	return a.Scale(-1)
 }
 
-func (a *AWS) Status() (Status, error) {
+func (a *AWSInventory) Status() (Status, error) {
 	params := &autoscaling.DescribeScalingActivitiesInput{AutoScalingGroupName: aws.String(a.GroupName())}
 	status := OK
 	done := false
@@ -111,7 +111,7 @@ func (a *AWS) Status() (Status, error) {
 	return status, nil
 }
 
-func (a *AWS) describeAutoScalingGroups(params *autoscaling.DescribeAutoScalingGroupsInput) *autoscaling.Group {
+func (a *AWSInventory) describeAutoScalingGroups(params *autoscaling.DescribeAutoScalingGroupsInput) *autoscaling.Group {
 	a.RefreshMetadata()
 	var group *autoscaling.Group
 	done := false
@@ -141,7 +141,7 @@ func (a *AWS) describeAutoScalingGroups(params *autoscaling.DescribeAutoScalingG
 	return group
 }
 
-func (a *AWS) GroupName() string {
+func (a *AWSInventory) GroupName() string {
 	if a.groupName == "" {
 		group := a.describeAutoScalingGroups(&autoscaling.DescribeAutoScalingGroupsInput{})
 		a.groupName = *group.AutoScalingGroupName
@@ -149,7 +149,7 @@ func (a *AWS) GroupName() string {
 	return a.groupName
 }
 
-func (a *AWS) Scale(amount int) error {
+func (a *AWSInventory) Scale(amount int) error {
 	// Check inventory status before trying to scale anything
 	status, err := a.Status()
 	if err != nil {
@@ -188,7 +188,7 @@ func (a *AWS) Scale(amount int) error {
 	return err
 }
 
-func (a *AWS) RefreshMetadata() {
+func (a *AWSInventory) RefreshMetadata() {
 	instanceID, err := a.EC2metadataSvc.GetMetadata("instance-id")
 	if err != nil {
 		a.log.Fatal(err)

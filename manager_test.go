@@ -3,51 +3,48 @@ package autoscaler_test
 import (
 	"github.com/Sirupsen/logrus"
 	"github.com/notonthehighstreet/autoscaler"
-	"github.com/notonthehighstreet/autoscaler/inventory"
-	"github.com/notonthehighstreet/autoscaler/monitor"
-	"github.com/notonthehighstreet/autoscaler/strategy"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
-var conf = viper.New()
+var config = viper.New()
 var log = logrus.WithFields(logrus.Fields{
 	"manager": "Test",
 })
-var inv inventory.MockInventory
-var mon monitor.MockMonitor
-var str strategy.MockStrategy
-var recommendation strategy.Recommendation
+var inv autoscaler.MockInventory
+var mon autoscaler.MockMonitor
+var str autoscaler.MockStrategy
+var recommendation autoscaler.Recommendation
 var man autoscaler.Manager
 
 func init() {
 	// Register plugins at load time
-	inventory.Register("mock", inventory.MockNew)
-	monitor.Register("mock", monitor.MockNew)
-	strategy.Register("mock", strategy.MockNew)
+	autoscaler.RegisterInventory("mock", autoscaler.NewMockInventory)
+	autoscaler.RegisterMonitor("mock", autoscaler.NewMockMonitor)
+	autoscaler.RegisterStrategy("mock", autoscaler.NewMockStrategy)
 }
 
-func setupTest() {
-	conf.Set("monitor.name", "mock")
-	conf.Set("inventory.name", "mock")
-	conf.Set("strategy.name", "mock")
-	recommendation = strategy.HOLD
-	man = autoscaler.Manager{Strategy: &str, Inventory: &inv, Logger: log, Config: conf}
+func setupManagerTest() {
+	config.Set("monitor.name", "mock")
+	config.Set("inventory.name", "mock")
+	config.Set("strategy.name", "mock")
+	recommendation = autoscaler.HOLD
+	man = autoscaler.Manager{Strategy: &str, Inventory: &inv, Logger: log, Config: config}
 
 }
 
 func TestManager_Run(t *testing.T) {
-	setupTest()
+	setupManagerTest()
 	str.On("Evaluate").Return(&recommendation, nil).Once()
 	assert.NoError(t, man.Run())
 }
 
 func TestScaleUpDisabled(t *testing.T) {
-	setupTest()
-	conf.Set("scale_up", false)
-	conf.Set("scale_down", true)
-	recommendation = strategy.SCALEUP
+	setupManagerTest()
+	config.Set("scale_up", false)
+	config.Set("scale_down", true)
+	recommendation = autoscaler.SCALEUP
 	str.On("Evaluate").Return(&recommendation, nil).Once()
 	inv.On("Increase").Return(nil).Once()
 	man.Run()
@@ -55,10 +52,10 @@ func TestScaleUpDisabled(t *testing.T) {
 }
 
 func TestScaleDownDisabled(t *testing.T) {
-	setupTest()
-	conf.Set("scale_up", true)
-	conf.Set("scale_down", false)
-	recommendation = strategy.SCALEDOWN
+	setupManagerTest()
+	config.Set("scale_up", true)
+	config.Set("scale_down", false)
+	recommendation = autoscaler.SCALEDOWN
 	str.On("Evaluate").Return(&recommendation, nil).Once()
 	inv.On("Decrease").Return(nil).Once()
 	man.Run()

@@ -1,4 +1,4 @@
-package monitor
+package autoscaler
 
 import (
 	"errors"
@@ -18,11 +18,11 @@ type MetricUpdate struct {
 
 // Create a hash for storing the names of registered monitors and their New() methods
 // eg {'foo': foo.New(), 'bar': bar.New(), 'baz': baz.New()}
-type factoryFunction func(config *viper.Viper, log *logrus.Entry) (Monitor, error)
+type monitorFactoryFunc func(config *viper.Viper, log *logrus.Entry) (Monitor, error)
 
-var monitors = make(map[string]factoryFunction)
+var monitors = make(map[string]monitorFactoryFunc)
 
-func Register(name string, factory factoryFunction) {
+func RegisterMonitor(name string, factory monitorFactoryFunc) {
 	if factory == nil {
 		logrus.Panicf("New() for %s does not exist.", name)
 	}
@@ -33,7 +33,7 @@ func Register(name string, factory factoryFunction) {
 	monitors[name] = factory
 }
 
-func New(config *viper.Viper, log *logrus.Entry) (Monitor, error) {
+func NewMonitor(config *viper.Viper, log *logrus.Entry) (Monitor, error) {
 	// Find the correct monitor and return it
 	if !config.IsSet("name") {
 		return nil, errors.New("No monitor name provided")

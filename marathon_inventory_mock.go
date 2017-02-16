@@ -1,4 +1,4 @@
-package inventory
+package autoscaler
 
 import (
 	"github.com/gambol99/go-marathon"

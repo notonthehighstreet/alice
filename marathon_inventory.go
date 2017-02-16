@@ -1,4 +1,4 @@
-package inventory
+package autoscaler
 
 import (
 	"errors"
@@ -9,19 +9,19 @@ import (
 	"time"
 )
 
-type MarathonClient interface {
+type MarathonInventoryClient interface {
 	ApplicationBy(name string, opts *marathon.GetAppOpts) (*marathon.Application, error)
 	ScaleApplicationInstances(name string, instances int, force bool) (*marathon.DeploymentID, error)
 }
 
-type Marathon struct {
+type MarathonInventory struct {
 	log          *logrus.Entry
-	Client       MarathonClient
+	Client       MarathonInventoryClient
 	Config       *viper.Viper
 	lastModified time.Time
 }
 
-func NewMarathon(config *viper.Viper, log *logrus.Entry) (Inventory, error) {
+func NewMarathonInventory(config *viper.Viper, log *logrus.Entry) (Inventory, error) {
 	requiredConfig := []string{"app", "url"}
 	for _, item := range requiredConfig {
 		if !config.IsSet(item) {
@@ -35,11 +35,11 @@ func NewMarathon(config *viper.Viper, log *logrus.Entry) (Inventory, error) {
 	if err != nil {
 		return nil, err
 	}
-	a := Marathon{log: log, Config: config, Client: client}
+	a := MarathonInventory{log: log, Config: config, Client: client}
 	return &a, nil
 }
 
-func (m *Marathon) Total() (int, error) {
+func (m *MarathonInventory) Total() (int, error) {
 	app, err := m.GetApplication()
 	if err != nil {
 		return 0, err
@@ -47,15 +47,15 @@ func (m *Marathon) Total() (int, error) {
 	return *app.Instances, nil
 }
 
-func (m *Marathon) Increase() error {
+func (m *MarathonInventory) Increase() error {
 	return m.Scale(+1)
 }
 
-func (m *Marathon) Decrease() error {
+func (m *MarathonInventory) Decrease() error {
 	return m.Scale(-1)
 }
 
-func (m *Marathon) Scale(amount int) error {
+func (m *MarathonInventory) Scale(amount int) error {
 	// Check inventory status before trying to scale anything
 	var e error
 	app, err := m.GetApplication()
@@ -95,7 +95,7 @@ func (m *Marathon) Scale(amount int) error {
 	return e
 }
 
-func (m *Marathon) Status() (Status, error) {
+func (m *MarathonInventory) Status() (Status, error) {
 	app, err := m.GetApplication()
 	if err != nil {
 		return FAILED, err
@@ -110,7 +110,7 @@ func (m *Marathon) Status() (Status, error) {
 	return OK, nil
 }
 
-func (m *Marathon) GetApplication() (*marathon.Application, error) {
+func (m *MarathonInventory) GetApplication() (*marathon.Application, error) {
 	name := m.Config.GetString("app")
 	app, err := m.Client.ApplicationBy(name, &marathon.GetAppOpts{})
 	if err != nil || app == nil {
