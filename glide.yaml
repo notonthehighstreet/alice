@@ -1,4 +1,4 @@
-package: github.com/notonthehighstreet/autoscaler
+package: github.com/notonthehighstreet/alice
 import:
 - package: github.com/andygrunwald/megos
 - package: github.com/aws/aws-sdk-go
