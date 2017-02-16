@@ -4,7 +4,7 @@ RUN apk --no-cache add ca-certificates
 
 USER user
 
-COPY autoscaler /service/
+COPY alice /service/
 
 ENTRYPOINT ["/bin/dumb-init"]
-CMD ["/service/autoscaler"]
+CMD ["/service/alice"]

@@ -1,9 +1,9 @@
-package autoscaler_test
+package alice_test
 
 import (
 	"errors"
 	"github.com/Sirupsen/logrus"
-	"github.com/notonthehighstreet/autoscaler"
+	"github.com/notonthehighstreet/alice"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	datadogclient "github.com/zorkian/go-datadog-api"
@@ -11,8 +11,8 @@ import (
 	"time"
 )
 
-var datadogMon *autoscaler.DatadogMonitor
-var mockDatadogClient autoscaler.MockDatadogClient
+var datadogMon *alice.DatadogMonitor
+var mockDatadogClient alice.MockDatadogClient
 
 func setupDatadogMonitorTest() {
 	config = viper.New()
@@ -24,9 +24,9 @@ func setupDatadogMonitorTest() {
 	config.Set("app_key", "bar")
 	config.Set("time_period", "5m")
 	log.Logger.Level = logrus.DebugLevel
-	mockDatadogClient = autoscaler.MockDatadogClient{}
-	m, _ := autoscaler.NewDatadogMonitor(config, log)
-	datadogMon = m.(*autoscaler.DatadogMonitor)
+	mockDatadogClient = alice.MockDatadogClient{}
+	m, _ := alice.NewDatadogMonitor(config, log)
+	datadogMon = m.(*alice.DatadogMonitor)
 	datadogMon.Client = &mockDatadogClient
 }
 

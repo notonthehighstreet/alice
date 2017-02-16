@@ -1,18 +1,18 @@
-package autoscaler_test
+package alice_test
 
 import (
+	"testing"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/andygrunwald/megos"
-	"github.com/stretchr/testify/assert"
-
-	"github.com/notonthehighstreet/autoscaler"
+	"github.com/notonthehighstreet/alice"
 	"github.com/spf13/viper"
-	"testing"
+	"github.com/stretchr/testify/assert"
 )
 
-var mockMesosClient autoscaler.MockMesosClient
+var mockMesosClient alice.MockMesosClient
 var state megos.State
-var mesosMon *autoscaler.MesosMonitor
+var mesosMon *alice.MesosMonitor
 
 func setupMesosMonitorTest() {
 	log = logrus.WithFields(logrus.Fields{
@@ -35,8 +35,8 @@ func setupMesosMonitorTest() {
 	}
 	mockMesosClient.On("GetStateFromLeader").Return(state, nil)
 	mockMesosClient.On("DetermineLeader").Return(megos.Pid{}, nil)
-	m, _ := autoscaler.NewMesosMonitor(viper.New(), log)
-	mesosMon = m.(*autoscaler.MesosMonitor)
+	m, _ := alice.NewMesosMonitor(viper.New(), log)
+	mesosMon = m.(*alice.MesosMonitor)
 	mesosMon.Client = &mockMesosClient
 }
 

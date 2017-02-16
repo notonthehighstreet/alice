@@ -1,10 +1,11 @@
-package autoscaler
+package alice
 
 import (
 	"errors"
+	"math"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/spf13/viper"
-	"math"
 )
 
 // RatioStrategy tries to keep the resources in an inventory at a set ratio to a current metric reading

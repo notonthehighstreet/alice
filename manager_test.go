@@ -1,36 +1,37 @@
-package autoscaler_test
+package alice_test
 
 import (
+	"testing"
+
 	"github.com/Sirupsen/logrus"
-	"github.com/notonthehighstreet/autoscaler"
+	"github.com/notonthehighstreet/alice"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 var config = viper.New()
 var log = logrus.WithFields(logrus.Fields{
 	"manager": "Test",
 })
-var inv autoscaler.MockInventory
-var mon autoscaler.MockMonitor
-var str autoscaler.MockStrategy
-var recommendation autoscaler.Recommendation
-var man autoscaler.Manager
+var inv alice.MockInventory
+var mon alice.MockMonitor
+var str alice.MockStrategy
+var recommendation alice.Recommendation
+var man alice.Manager
 
 func init() {
 	// Register plugins at load time
-	autoscaler.RegisterInventory("mock", autoscaler.NewMockInventory)
-	autoscaler.RegisterMonitor("mock", autoscaler.NewMockMonitor)
-	autoscaler.RegisterStrategy("mock", autoscaler.NewMockStrategy)
+	alice.RegisterInventory("mock", alice.NewMockInventory)
+	alice.RegisterMonitor("mock", alice.NewMockMonitor)
+	alice.RegisterStrategy("mock", alice.NewMockStrategy)
 }
 
 func setupManagerTest() {
 	config.Set("monitor.name", "mock")
 	config.Set("inventory.name", "mock")
 	config.Set("strategy.name", "mock")
-	recommendation = autoscaler.HOLD
-	man = autoscaler.Manager{Strategy: &str, Inventory: &inv, Logger: log, Config: config}
+	recommendation = alice.HOLD
+	man = alice.Manager{Strategy: &str, Inventory: &inv, Logger: log, Config: config}
 
 }
 
@@ -44,7 +45,7 @@ func TestScaleUpDisabled(t *testing.T) {
 	setupManagerTest()
 	config.Set("scale_up", false)
 	config.Set("scale_down", true)
-	recommendation = autoscaler.SCALEUP
+	recommendation = alice.SCALEUP
 	str.On("Evaluate").Return(&recommendation, nil).Once()
 	inv.On("Increase").Return(nil).Once()
 	man.Run()
@@ -55,7 +56,7 @@ func TestScaleDownDisabled(t *testing.T) {
 	setupManagerTest()
 	config.Set("scale_up", true)
 	config.Set("scale_down", false)
-	recommendation = autoscaler.SCALEDOWN
+	recommendation = alice.SCALEDOWN
 	str.On("Evaluate").Return(&recommendation, nil).Once()
 	inv.On("Decrease").Return(nil).Once()
 	man.Run()

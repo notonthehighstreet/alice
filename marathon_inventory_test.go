@@ -1,4 +1,4 @@
-package autoscaler_test
+package alice_test
 
 import (
 	"github.com/Sirupsen/logrus"
@@ -7,11 +7,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"testing"
 
-	"github.com/notonthehighstreet/autoscaler"
+	"github.com/notonthehighstreet/alice"
 )
 
-var marathonInv *autoscaler.MarathonInventory
-var mockClient autoscaler.MockMarathonClient
+var marathonInv *alice.MarathonInventory
+var mockClient alice.MockMarathonClient
 
 func setupMarathonInventoryTest() {
 	log = logrus.WithFields(logrus.Fields{
@@ -22,8 +22,8 @@ func setupMarathonInventoryTest() {
 	config := viper.New()
 	config.Set("app", "notonthehighstreet-admin")
 	config.Set("url", "http://foo.com:8080")
-	i, _ := autoscaler.NewMarathonInventory(config, log)
-	marathonInv = i.(*autoscaler.MarathonInventory)
+	i, _ := alice.NewMarathonInventory(config, log)
+	marathonInv = i.(*alice.MarathonInventory)
 	marathonInv.Client = &mockClient
 	instances := 1
 	app := marathonclient.Application{Instances: &instances}
@@ -67,7 +67,7 @@ func TestMarathonInventory_Decrease(t *testing.T) {
 func TestMarathonInventory_Status(t *testing.T) {
 	setupMarathonInventoryTest()
 	s, _ := marathonInv.Status()
-	assert.Equal(t, autoscaler.OK, s)
+	assert.Equal(t, alice.OK, s)
 }
 
 func TestMarathonInventory_SettleDownTime(t *testing.T) {
@@ -77,7 +77,7 @@ func TestMarathonInventory_SettleDownTime(t *testing.T) {
 	marathonInv.Config.Set("settle_down_period", "5m")
 	assert.Nil(t, marathonInv.Increase())
 	s, _ := marathonInv.Status()
-	assert.Equal(t, autoscaler.UPDATING, s)
+	assert.Equal(t, alice.UPDATING, s)
 	assert.Error(t, marathonInv.Decrease())
 	assert.Error(t, marathonInv.Increase())
 }
