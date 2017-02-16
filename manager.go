@@ -6,6 +6,8 @@ import (
 	"github.com/spf13/viper"
 )
 
+// Manager ties together the inventory and the strategy. It will evaluate the strategy and will execute scaling actions
+// on the inventory based on the recommendation it received.
 type Manager struct {
 	Inventory Inventory
 	Logger    *logrus.Entry
@@ -13,6 +15,7 @@ type Manager struct {
 	Config    *viper.Viper
 }
 
+// New creates a new Manager
 func New(config *viper.Viper, log *logrus.Entry) (Manager, error) {
 	requiredKeys := []string{"inventory", "monitor", "strategy"}
 	for _, k := range requiredKeys {
@@ -42,6 +45,8 @@ func New(config *viper.Viper, log *logrus.Entry) (Manager, error) {
 	return Manager{Strategy: str, Inventory: inv, Logger: log, Config: config}, nil
 }
 
+// Run requests a recommendation from the strategy, and if not running in dry-run mode will attempt to scale up the
+// inventory.
 func (m *Manager) Run() error {
 	m.Logger.Info("Executing strategy")
 	rec, err := m.Strategy.Evaluate()

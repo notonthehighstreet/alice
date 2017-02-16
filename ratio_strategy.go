@@ -16,10 +16,12 @@ type RatioStrategy struct {
 	log       *logrus.Entry
 }
 
+// NewRatioStrategy creates a new Strategy
 func NewRatioStrategy(config *viper.Viper, inv Inventory, mon Monitor, log *logrus.Entry) (Strategy, error) {
 	return &RatioStrategy{Config: config, Inventory: inv, Monitor: mon, log: log}, nil
 }
 
+// Evaluate will pull data from the associated Monitor and return a scaling recommendation
 func (r *RatioStrategy) Evaluate() (*Recommendation, error) {
 	finalRecommendation := SCALEDOWN
 

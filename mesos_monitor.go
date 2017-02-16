@@ -9,12 +9,14 @@ import (
 	"github.com/spf13/viper"
 )
 
+// MesosMonitor can pull metrics directly from the Mesos Stats API endpoint
 type MesosMonitor struct {
 	log    *logrus.Entry
 	Client MesosClient
 	config *viper.Viper
 }
 
+// MesosMonitorStats holds a set of calculated metrics
 type MesosMonitorStats struct {
 	Metrics map[string]float64
 }
@@ -47,6 +49,7 @@ func (s *MesosMonitorStats) add(name string, number float64) {
 	}
 }
 
+// MesosClient allows mocks of the megos client
 type MesosClient interface {
 	GetStateFromLeader() (*megos.State, error)
 	DetermineLeader() (*megos.Pid, error)
@@ -54,6 +57,7 @@ type MesosClient interface {
 
 const defaultMesosMaster = "http://mesos.service.consul:5050/state"
 
+// NewMesosMonitor creates a new Monitor
 func NewMesosMonitor(config *viper.Viper, log *logrus.Entry) (Monitor, error) {
 	config.SetDefault("endpoint", defaultMesosMaster)
 	u, err := url.Parse(config.GetString("endpoint"))
@@ -64,6 +68,7 @@ func NewMesosMonitor(config *viper.Viper, log *logrus.Entry) (Monitor, error) {
 	return &MesosMonitor{log: log, Client: mesos, config: config}, nil
 }
 
+// GetUpdatedMetrics returns MetricUpdates for each of the metrics requested
 func (m *MesosMonitor) GetUpdatedMetrics(names []string) (*[]MetricUpdate, error) {
 	response := make([]MetricUpdate, len(names))
 	stats, err := m.Stats()
@@ -81,6 +86,7 @@ func (m *MesosMonitor) GetUpdatedMetrics(names []string) (*[]MetricUpdate, error
 	return &response, nil
 }
 
+// Stats calculates interesting metrics about the Mesos cluster and the slaves
 func (m *MesosMonitor) Stats() (*MesosMonitorStats, error) {
 	m.Client.DetermineLeader()
 	state, err := m.Client.GetStateFromLeader()

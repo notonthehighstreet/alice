@@ -13,10 +13,12 @@ import (
 	"time"
 )
 
+// EC2MetadataAPI is an interface allowing mocks of the AWS client
 type EC2MetadataAPI interface {
 	GetMetadata(string) (string, error)
 }
 
+// AWSInventory is an inventory of AWS EC2 instances in an autoscaling group
 type AWSInventory struct {
 	log            *logrus.Entry
 	Config         *viper.Viper
@@ -27,6 +29,7 @@ type AWSInventory struct {
 	lastModified   time.Time
 }
 
+// AWSMetadata provides region and instance id metadata
 type AWSMetadata struct {
 	region       string
 	regionWithAZ string
@@ -38,6 +41,7 @@ const (
 	defaultSettleDownPeriod = "0s"
 )
 
+// NewAWSInventory creates a new AWSInventory
 func NewAWSInventory(config *viper.Viper, log *logrus.Entry) (Inventory, error) {
 	config.SetDefault("region", defaultAWSRegion)
 	config.SetDefault("settle_down_period", defaultSettleDownPeriod)
@@ -56,6 +60,7 @@ func NewAWSInventory(config *viper.Viper, log *logrus.Entry) (Inventory, error) 
 	return &inv, nil
 }
 
+// Total returns the current total number of resources
 func (a *AWSInventory) Total() (int, error) {
 	name := a.GroupName()
 	params := &autoscaling.DescribeAutoScalingGroupsInput{
@@ -65,14 +70,17 @@ func (a *AWSInventory) Total() (int, error) {
 	return len(group.Instances), nil
 }
 
+// Increase (scale up) the number of resources in the inventory
 func (a *AWSInventory) Increase() error {
 	return a.Scale(+1)
 }
 
+// Decrease (scale down) the number of resources in the inventory
 func (a *AWSInventory) Decrease() error {
 	return a.Scale(-1)
 }
 
+// Status returns OK if the inventory is ready to be scaled, UPDATING if an update is in progress, or FAILED
 func (a *AWSInventory) Status() (Status, error) {
 	params := &autoscaling.DescribeScalingActivitiesInput{AutoScalingGroupName: aws.String(a.GroupName())}
 	status := OK
@@ -141,6 +149,7 @@ func (a *AWSInventory) describeAutoScalingGroups(params *autoscaling.DescribeAut
 	return group
 }
 
+// GroupName returns the autoscaling group for this inventory
 func (a *AWSInventory) GroupName() string {
 	if a.groupName == "" {
 		group := a.describeAutoScalingGroups(&autoscaling.DescribeAutoScalingGroupsInput{})
@@ -149,6 +158,7 @@ func (a *AWSInventory) GroupName() string {
 	return a.groupName
 }
 
+// Scale attempts to increase the number of instances by the amount specified
 func (a *AWSInventory) Scale(amount int) error {
 	// Check inventory status before trying to scale anything
 	status, err := a.Status()
@@ -188,6 +198,7 @@ func (a *AWSInventory) Scale(amount int) error {
 	return err
 }
 
+// RefreshMetadata pulls updated metadata
 func (a *AWSInventory) RefreshMetadata() {
 	instanceID, err := a.EC2metadataSvc.GetMetadata("instance-id")
 	if err != nil {
