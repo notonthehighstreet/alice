@@ -43,6 +43,6 @@ We would love some extra hands to help improve the Alice.
 If you want to help, please try to follow the following workflow to help make PRs accepted quickly.
 
 1. Raise an issue
-2. create a branch
+2. Create a branch
 3. Write tests
 4. Submit a PR
