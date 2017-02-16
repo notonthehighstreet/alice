@@ -82,9 +82,9 @@ logging:
   fluentd:
     host: 172.17.42.1
     port: 24224
-    tag: core.autoscaler
+    tag: core.alice
   slack:
     hook_url: https://hooks.slack.com/services/abc123/defghijklmnopqrstuvwxyz
     channel: "#slack-testing"
     emoji: ":robot_face:"
-    username: autoscaler
+    username: alice
