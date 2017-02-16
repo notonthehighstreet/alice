@@ -6,13 +6,28 @@ import (
 	"github.com/notonthehighstreet/alice"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
-	datadogclient "github.com/zorkian/go-datadog-api"
+	"github.com/stretchr/testify/mock"
+	"github.com/zorkian/go-datadog-api"
 	"testing"
 	"time"
 )
 
+type MockDatadogClient struct {
+	mock.Mock
+}
+
+func (d *MockDatadogClient) Validate() (bool, error) {
+	args := d.Mock.Called()
+	return args.Get(0).(bool), args.Error(1)
+}
+
+func (d *MockDatadogClient) QueryMetrics(from, to int64, query string) ([]datadog.Series, error) {
+	args := d.Mock.Called()
+	return args.Get(0).([]datadog.Series), args.Error(1)
+}
+
 var datadogMon *alice.DatadogMonitor
-var mockDatadogClient alice.MockDatadogClient
+var mockDatadogClient MockDatadogClient
 
 func setupDatadogMonitorTest() {
 	config = viper.New()
@@ -24,7 +39,7 @@ func setupDatadogMonitorTest() {
 	config.Set("app_key", "bar")
 	config.Set("time_period", "5m")
 	log.Logger.Level = logrus.DebugLevel
-	mockDatadogClient = alice.MockDatadogClient{}
+	mockDatadogClient = MockDatadogClient{}
 	m, _ := alice.NewDatadogMonitor(config, log)
 	datadogMon = m.(*alice.DatadogMonitor)
 	datadogMon.Client = &mockDatadogClient
@@ -34,8 +49,8 @@ func TestDatadogMonitor_GetUpdatedMetrics(t *testing.T) {
 	setupDatadogMonitorTest()
 	config.Set("metrics.foo.bar.baz.query", "avg:foo.bar.baz{*}")
 	metrics := []string{"foo.bar.baz"}
-	mockResponse := []datadogclient.Series{
-		{Points: []datadogclient.DataPoint{
+	mockResponse := []datadog.Series{
+		{Points: []datadog.DataPoint{
 			{float64(time.Now().Unix() - 2), 0.9},
 			{float64(time.Now().Unix() - 1), 0.3},
 			{float64(time.Now().Unix()), 0.5},
@@ -55,13 +70,13 @@ func TestDatadogMonitor_GetUpdatedMetricsNoData(t *testing.T) {
 	metrics := []string{"foo.bar.baz"}
 	mockDatadogClient.On("Validate").Return(true, nil)
 
-	mockResponse := []datadogclient.Series{}
+	mockResponse := []datadog.Series{}
 	mockDatadogClient.On("QueryMetrics").Return(mockResponse, nil).Once()
 	_, err1 := datadogMon.GetUpdatedMetrics(metrics)
 	assert.Error(t, err1)
 
-	mockResponse = []datadogclient.Series{
-		{Points: []datadogclient.DataPoint{}},
+	mockResponse = []datadog.Series{
+		{Points: []datadog.DataPoint{}},
 	}
 	mockDatadogClient.On("QueryMetrics").Return(mockResponse, nil).Once()
 	_, err2 := datadogMon.GetUpdatedMetrics(metrics)

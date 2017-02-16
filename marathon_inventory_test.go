@@ -2,16 +2,33 @@ package alice_test
 
 import (
 	"github.com/Sirupsen/logrus"
-	marathonclient "github.com/gambol99/go-marathon"
+	"github.com/gambol99/go-marathon"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"testing"
 
 	"github.com/notonthehighstreet/alice"
 )
 
+type MockMarathonClient struct {
+	mock.Mock
+}
+
+func (m *MockMarathonClient) ApplicationBy(name string, opts *marathon.GetAppOpts) (*marathon.Application, error) {
+	args := m.Mock.Called()
+	app := args.Get(0).(marathon.Application)
+	return &app, args.Error(1)
+}
+
+func (m *MockMarathonClient) ScaleApplicationInstances(name string, instances int, force bool) (*marathon.DeploymentID, error) {
+	args := m.Mock.Called()
+	dep := args.Get(0).(marathon.DeploymentID)
+	return &dep, args.Error(1)
+}
+
 var marathonInv *alice.MarathonInventory
-var mockClient alice.MockMarathonClient
+var mockClient MockMarathonClient
 
 func setupMarathonInventoryTest() {
 	log = logrus.WithFields(logrus.Fields{
@@ -26,7 +43,7 @@ func setupMarathonInventoryTest() {
 	marathonInv = i.(*alice.MarathonInventory)
 	marathonInv.Client = &mockClient
 	instances := 1
-	app := marathonclient.Application{Instances: &instances}
+	app := marathon.Application{Instances: &instances}
 	mockClient.On("ApplicationBy").Return(app, nil)
 }
 
@@ -38,7 +55,7 @@ func TestMarathonInventory_Total(t *testing.T) {
 
 func TestMarathonInventory_Scale(t *testing.T) {
 	setupMarathonInventoryTest()
-	deployment := marathonclient.DeploymentID{}
+	deployment := marathon.DeploymentID{}
 	mockClient.On("ScaleApplicationInstances").Return(deployment, nil)
 	err := marathonInv.Scale(+1)
 	assert.NoError(t, err)
@@ -46,7 +63,7 @@ func TestMarathonInventory_Scale(t *testing.T) {
 
 func TestMarathonInventory_Increase(t *testing.T) {
 	setupMarathonInventoryTest()
-	deployment := marathonclient.DeploymentID{}
+	deployment := marathon.DeploymentID{}
 	mockClient.On("ScaleApplicationInstances").Return(deployment, nil)
 	assert.NoError(t, marathonInv.Increase())
 
@@ -56,7 +73,7 @@ func TestMarathonInventory_Increase(t *testing.T) {
 
 func TestMarathonInventory_Decrease(t *testing.T) {
 	setupMarathonInventoryTest()
-	deployment := marathonclient.DeploymentID{}
+	deployment := marathon.DeploymentID{}
 	mockClient.On("ScaleApplicationInstances").Return(deployment, nil)
 	assert.NoError(t, marathonInv.Decrease())
 
@@ -72,7 +89,7 @@ func TestMarathonInventory_Status(t *testing.T) {
 
 func TestMarathonInventory_SettleDownTime(t *testing.T) {
 	setupMarathonInventoryTest()
-	deployment := marathonclient.DeploymentID{}
+	deployment := marathon.DeploymentID{}
 	mockClient.On("ScaleApplicationInstances").Return(deployment, nil)
 	marathonInv.Config.Set("settle_down_period", "5m")
 	assert.Nil(t, marathonInv.Increase())
