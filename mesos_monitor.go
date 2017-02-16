@@ -1,11 +1,12 @@
-package autoscaler
+package alice
 
 import (
+	"net/url"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/andygrunwald/megos"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
-	"net/url"
 )
 
 type MesosMonitor struct {

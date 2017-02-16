@@ -1,7 +1,8 @@
-package autoscaler
+package alice
 
 import (
 	"fmt"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/spf13/viper"
 )

@@ -1,22 +1,23 @@
-package autoscaler_test
+package alice_test
 
 import (
-	"github.com/Sirupsen/logrus"
-	"github.com/notonthehighstreet/autoscaler"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/Sirupsen/logrus"
+	"github.com/notonthehighstreet/alice"
+	"github.com/stretchr/testify/assert"
 )
 
 func setupMonitorTest() {
 	log = logrus.WithFields(logrus.Fields{
 		"manager": "Mock",
 	})
-	autoscaler.RegisterMonitor("mock", autoscaler.NewMockMonitor)
+	alice.RegisterMonitor("mock", alice.NewMockMonitor)
 	config.Set("name", "mock")
 }
 
 func TestNewMonitor(t *testing.T) {
 	setupMonitorTest()
-	i, _ := autoscaler.NewMonitor(config, log)
-	assert.IsType(t, &autoscaler.MockMonitor{}, i)
+	i, _ := alice.NewMonitor(config, log)
+	assert.IsType(t, &alice.MockMonitor{}, i)
 }

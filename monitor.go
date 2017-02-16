@@ -1,10 +1,11 @@
-package autoscaler
+package alice
 
 import (
 	"errors"
+	"strings"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/spf13/viper"
-	"strings"
 )
 
 type Monitor interface {

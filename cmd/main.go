@@ -5,7 +5,7 @@ import (
 	"github.com/evalphobia/logrus_fluent"
 	"github.com/heirko/go-contrib/logrusHelper"
 	"github.com/johntdyer/slackrus"
-	"github.com/notonthehighstreet/autoscaler"
+	"github.com/notonthehighstreet/alice"
 	conf "github.com/spf13/viper"
 	"sync"
 	"time"
@@ -13,14 +13,14 @@ import (
 
 func init() {
 	// Register plugins at load time
-	autoscaler.RegisterInventory("aws", autoscaler.NewAWSInventory)
-	autoscaler.RegisterInventory("fake", autoscaler.NewFakeInventory)
-	autoscaler.RegisterInventory("marathon", autoscaler.NewMarathonInventory)
-	autoscaler.RegisterMonitor("fake", autoscaler.NewFakeMonitor)
-	autoscaler.RegisterMonitor("mesos", autoscaler.NewMesosMonitor)
-	autoscaler.RegisterMonitor("datadog", autoscaler.NewDatadogMonitor)
-	autoscaler.RegisterStrategy("ratio", autoscaler.NewRatioStrategy)
-	autoscaler.RegisterStrategy("threshold", autoscaler.NewThresholdStrategy)
+	alice.RegisterInventory("aws", alice.NewAWSInventory)
+	alice.RegisterInventory("fake", alice.NewFakeInventory)
+	alice.RegisterInventory("marathon", alice.NewMarathonInventory)
+	alice.RegisterMonitor("fake", alice.NewFakeMonitor)
+	alice.RegisterMonitor("mesos", alice.NewMesosMonitor)
+	alice.RegisterMonitor("datadog", alice.NewDatadogMonitor)
+	alice.RegisterStrategy("ratio", alice.NewRatioStrategy)
+	alice.RegisterStrategy("threshold", alice.NewThresholdStrategy)
 
 	// Setup config
 	conf.AddConfigPath("./config")
@@ -33,9 +33,9 @@ func init() {
 
 func main() {
 	log := initLogger()
-	var managers []autoscaler.Manager
+	var managers []alice.Manager
 	for name := range conf.GetStringMap("managers") {
-		if mgr, err := autoscaler.New(conf.Sub("managers."+name), log.WithField("manager", name)); err != nil {
+		if mgr, err := alice.New(conf.Sub("managers."+name), log.WithField("manager", name)); err != nil {
 			log.Fatalf("Error initializing manager: %s", err.Error())
 		} else {
 			managers = append(managers, mgr)
@@ -45,7 +45,7 @@ func main() {
 		var wg sync.WaitGroup
 		wg.Add(len(managers))
 		for _, man := range managers {
-			go func(m autoscaler.Manager) {
+			go func(m alice.Manager) {
 				defer wg.Done()
 				m.Run()
 			}(man)
@@ -66,7 +66,7 @@ func initLogger() *logrus.Entry {
 
 		fluentConf.SetDefault("host", "172.17.42.1")
 		fluentConf.SetDefault("port", 24224)
-		fluentConf.SetDefault("tag", "service.autoscaler")
+		fluentConf.SetDefault("tag", "service.alice")
 
 		hook, err := logrus_fluent.New(fluentConf.GetString("host"), fluentConf.GetInt("port"))
 		if err != nil {
@@ -77,7 +77,7 @@ func initLogger() *logrus.Entry {
 	}
 	if loggingConf.IsSet("slack") {
 		slackConf := loggingConf.Sub("slack")
-		slackConf.SetDefault("username", "autoscaler")
+		slackConf.SetDefault("username", "alice")
 		slackConf.SetDefault("emoji", ":robot_face:")
 		slackConf.SetDefault("channel", "#slack-testing")
 		if !slackConf.IsSet("hook_url") {

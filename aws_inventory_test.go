@@ -1,20 +1,20 @@
-package autoscaler_test
+package alice_test
 
 import (
 	"github.com/Sirupsen/logrus"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/autoscaling"
-	"github.com/notonthehighstreet/autoscaler"
+	"github.com/notonthehighstreet/alice"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
-var mockEc2MetadataClient autoscaler.MockEC2MetadataClient
-var mockAutoscalingClient autoscaler.MockAutoScalingClient
+var mockEc2MetadataClient alice.MockEC2MetadataClient
+var mockAutoscalingClient alice.MockAutoScalingClient
 var asg autoscaling.DescribeAutoScalingGroupsOutput
 var asgScalingActivities autoscaling.DescribeScalingActivitiesOutput
-var AWSInv *autoscaler.AWSInventory
+var AWSInv *alice.AWSInventory
 
 func setupAWSInventoryTest() {
 	log = logrus.WithFields(logrus.Fields{
@@ -52,8 +52,8 @@ func setupAWSInventoryTest() {
 	mockAutoscalingClient.On("SetDesiredCapacity").Return(nil)
 	log.Logger.Level = logrus.DebugLevel
 
-	i, _ := autoscaler.NewAWSInventory(viper.New(), log)
-	AWSInv = i.(*autoscaler.AWSInventory)
+	i, _ := alice.NewAWSInventory(viper.New(), log)
+	AWSInv = i.(*alice.AWSInventory)
 	AWSInv.AutoscalingSvc = &mockAutoscalingClient
 	AWSInv.EC2metadataSvc = &mockEc2MetadataClient
 }
@@ -101,13 +101,13 @@ func TestAWSInventory_Status(t *testing.T) {
 	}
 	setupAWSInventoryTest()
 	status, _ := AWSInv.Status()
-	assert.Equal(t, autoscaler.OK, status)
+	assert.Equal(t, alice.OK, status)
 	asgScalingActivities.Activities = append(asgScalingActivities.Activities, updatingActivity)
 	status, _ = AWSInv.Status()
-	assert.Equal(t, autoscaler.UPDATING, status)
+	assert.Equal(t, alice.UPDATING, status)
 	asgScalingActivities.Activities = append(asgScalingActivities.Activities, failedActivity)
 	status, _ = AWSInv.Status()
-	assert.Equal(t, autoscaler.FAILED, status)
+	assert.Equal(t, alice.FAILED, status)
 }
 
 func TestAWSInventory_SettleDownTime(t *testing.T) {
@@ -115,7 +115,7 @@ func TestAWSInventory_SettleDownTime(t *testing.T) {
 	AWSInv.Config.Set("settle_down_period", "5m")
 	assert.Nil(t, AWSInv.Increase())
 	status, _ := AWSInv.Status()
-	assert.Equal(t, autoscaler.UPDATING, status)
+	assert.Equal(t, alice.UPDATING, status)
 	assert.Error(t, AWSInv.Decrease())
 	assert.Error(t, AWSInv.Increase())
 }

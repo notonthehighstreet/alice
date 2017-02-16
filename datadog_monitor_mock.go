@@ -1,4 +1,4 @@
-package autoscaler
+package alice
 
 import (
 	"github.com/stretchr/testify/mock"
