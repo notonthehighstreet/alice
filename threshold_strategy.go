@@ -7,20 +7,22 @@ import (
 	"github.com/spf13/viper"
 )
 
+// ThresholdStrategy aims to keep the value in the middle but will always recommend scaling up if any metric
+// is above it's upper threshold
 type ThresholdStrategy struct {
 	Config *viper.Viper
 	// <metric name>: [<lower threshold>, <upper threshold>]
-	// Strategy aims to keep the value in the middle but will always recommend scaling up if any metric
-	// is above it's upper threshold
 	Inventory Inventory
 	Monitor   Monitor
 	log       *logrus.Entry
 }
 
+// NewThresholdStrategy creates a new Strategy
 func NewThresholdStrategy(config *viper.Viper, inv Inventory, mon Monitor, log *logrus.Entry) (Strategy, error) {
 	return &ThresholdStrategy{Config: config, Inventory: inv, Monitor: mon, log: log}, nil
 }
 
+// Evaluate will pull data from the associated Monitor and return a scaling recommendation
 func (p *ThresholdStrategy) Evaluate() (*Recommendation, error) {
 	finalRecommendation := SCALEDOWN
 

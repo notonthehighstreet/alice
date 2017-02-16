@@ -10,29 +10,32 @@ import (
 	"time"
 )
 
+// DatadogMonitorClient is an intenface allowing mocks of go-datadog-api
 type DatadogMonitorClient interface {
 	Validate() (bool, error)
 	QueryMetrics(int64, int64, string) ([]datadog.Series, error)
 }
 
+// DatadogMonitor is a monitor that can pull metrics from Datadog
 type DatadogMonitor struct {
 	log               *logrus.Entry
 	Client            DatadogMonitorClient
 	config            *viper.Viper
-	isApiKeyValid     bool
-	haveCheckedApiKey bool
+	isAPIKeyValid     bool
+	haveCheckedAPIKey bool
 }
 
+// GetUpdatedMetrics returns MetricUpdates for each of the metrics requested
 func (d *DatadogMonitor) GetUpdatedMetrics(names []string) (*[]MetricUpdate, error) {
 	response := make([]MetricUpdate, len(names))
-	if !d.haveCheckedApiKey {
+	if !d.haveCheckedAPIKey {
 		v, err := d.Client.Validate() // validate API key
 		if err != nil {
 			return nil, err
 		}
-		d.isApiKeyValid = v
+		d.isAPIKeyValid = v
 	}
-	if !d.isApiKeyValid {
+	if !d.isAPIKeyValid {
 		return nil, errors.New("Datadog API key invalid")
 	}
 	to := time.Now()
@@ -62,6 +65,7 @@ func (d *DatadogMonitor) GetUpdatedMetrics(names []string) (*[]MetricUpdate, err
 	return &response, nil
 }
 
+// NewDatadogMonitor returns a new DatadogMonitor
 func NewDatadogMonitor(config *viper.Viper, log *logrus.Entry) (Monitor, error) {
 	requiredConfig := []string{"api_key", "app_key", "time_period"}
 	for _, item := range requiredConfig {

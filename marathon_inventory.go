@@ -9,11 +9,13 @@ import (
 	"time"
 )
 
+// MarathonInventoryClient is an intenface allowing mocks of go-marathon
 type MarathonInventoryClient interface {
 	ApplicationBy(name string, opts *marathon.GetAppOpts) (*marathon.Application, error)
 	ScaleApplicationInstances(name string, instances int, force bool) (*marathon.DeploymentID, error)
 }
 
+// MarathonInventory is an inventory of instances running as a marathon application in Marathon
 type MarathonInventory struct {
 	log          *logrus.Entry
 	Client       MarathonInventoryClient
@@ -21,11 +23,12 @@ type MarathonInventory struct {
 	lastModified time.Time
 }
 
+// NewMarathonInventory creates a new Inventory
 func NewMarathonInventory(config *viper.Viper, log *logrus.Entry) (Inventory, error) {
 	requiredConfig := []string{"app", "url"}
 	for _, item := range requiredConfig {
 		if !config.IsSet(item) {
-			return nil, errors.New(fmt.Sprintf("Missing config: %v", item))
+			return nil, fmt.Errorf("Missing config: %v", item)
 		}
 	}
 	config.SetDefault("settle_down_period", "0s")
@@ -39,6 +42,7 @@ func NewMarathonInventory(config *viper.Viper, log *logrus.Entry) (Inventory, er
 	return &a, nil
 }
 
+// Total returns the current total number of resources
 func (m *MarathonInventory) Total() (int, error) {
 	app, err := m.GetApplication()
 	if err != nil {
@@ -47,14 +51,17 @@ func (m *MarathonInventory) Total() (int, error) {
 	return *app.Instances, nil
 }
 
+// Increase (scale up) the number of resources in the inventory
 func (m *MarathonInventory) Increase() error {
 	return m.Scale(+1)
 }
 
+// Decrease (scale down) the number of resources in the inventory
 func (m *MarathonInventory) Decrease() error {
 	return m.Scale(-1)
 }
 
+// Scale attempts to increase the number of instances by the amount specified
 func (m *MarathonInventory) Scale(amount int) error {
 	// Check inventory status before trying to scale anything
 	var e error
@@ -95,6 +102,7 @@ func (m *MarathonInventory) Scale(amount int) error {
 	return e
 }
 
+// Status returns OK if the inventory is ready to be scaled, UPDATING if an update is in progress, or FAILED
 func (m *MarathonInventory) Status() (Status, error) {
 	app, err := m.GetApplication()
 	if err != nil {
@@ -110,6 +118,7 @@ func (m *MarathonInventory) Status() (Status, error) {
 	return OK, nil
 }
 
+// GetApplication returns the marathon.Application for the current application being managed
 func (m *MarathonInventory) GetApplication() (*marathon.Application, error) {
 	name := m.Config.GetString("app")
 	app, err := m.Client.ApplicationBy(name, &marathon.GetAppOpts{})
