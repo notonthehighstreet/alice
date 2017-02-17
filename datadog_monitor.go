@@ -3,11 +3,12 @@ package alice
 import (
 	"errors"
 	"fmt"
+	"strconv"
+	"time"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/zorkian/go-datadog-api"
-	"strconv"
-	"time"
 )
 
 // DatadogMonitorClient is an intenface allowing mocks of go-datadog-api
