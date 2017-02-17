@@ -3,10 +3,11 @@ package alice
 import (
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/gambol99/go-marathon"
 	"github.com/spf13/viper"
-	"time"
 )
 
 // MarathonInventoryClient is an intenface allowing mocks of go-marathon
