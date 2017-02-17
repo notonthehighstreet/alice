@@ -2,9 +2,10 @@ package alice
 
 import (
 	"errors"
+	"strings"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/spf13/viper"
-	"strings"
 )
 
 // Inventory represents the generic inventory interface. An inventory can manage any type of resource (server instances,

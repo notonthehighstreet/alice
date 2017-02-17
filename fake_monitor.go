@@ -1,9 +1,10 @@
 package alice
 
 import (
+	"math"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/spf13/viper"
-	"math"
 )
 
 // FakeMonitor is a dummy monitor that will generate numbers for any metric requested. Values returned for metrics
